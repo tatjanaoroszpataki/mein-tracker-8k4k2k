@@ -147,5 +147,118 @@
     });
   }
 
-  window.WeightChart = { draw: draw };
+  /**
+   * Zeichnet zwei Messreihen in denselben Chart (z. B. Taille & Hüfte).
+   * Beide Reihen teilen sich eine gemeinsame, datumsbasierte X-Achse
+   * (Vereinigung aller Termine aus beiden Reihen) und eine gemeinsame
+   * Y-Skala — an Terminen, an denen nur eine der beiden Reihen einen
+   * Wert hat, wird die Linie der anderen Reihe dort einfach unterbrochen,
+   * statt sie falsch zu verbinden.
+   * @param {HTMLCanvasElement} canvas
+   * @param {Array<{date:string, kg:number}>} seriesA
+   * @param {Array<{date:string, kg:number}>} seriesB
+   * @param {string} colorA CSS-Farbwert für Reihe A
+   * @param {string} colorB CSS-Farbwert für Reihe B
+   */
+  function drawDual(canvas, seriesA, seriesB, colorA, colorB) {
+    var ctx = canvas.getContext('2d');
+    var cssWidth = canvas.parentElement.clientWidth;
+    var cssHeight = 220;
+    var dpr = window.devicePixelRatio || 1;
+
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.style.height = cssHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    var styles = getComputedStyle(document.documentElement);
+    var colorInk = styles.getPropertyValue('--color-ink-soft').trim() || '#55635B';
+    var colorBorder = styles.getPropertyValue('--color-border').trim() || '#DCDFD2';
+
+    var padding = { top: 16, right: 12, bottom: 26, left: 40 };
+    var plotW = cssWidth - padding.left - padding.right;
+    var plotH = cssHeight - padding.top - padding.bottom;
+
+    var allDates = [];
+    var seen = {};
+    seriesA.concat(seriesB).forEach(function (e) {
+      if (!seen[e.date]) { seen[e.date] = true; allDates.push(e.date); }
+    });
+    allDates.sort();
+
+    if (!allDates.length) {
+      ctx.fillStyle = colorInk;
+      ctx.font = '13px ' + styles.getPropertyValue('--font-body');
+      ctx.textAlign = 'center';
+      ctx.fillText('Noch keine Einträge.', cssWidth / 2, cssHeight / 2);
+      return;
+    }
+
+    var mapA = {}; seriesA.forEach(function (e) { mapA[e.date] = e.kg; });
+    var mapB = {}; seriesB.forEach(function (e) { mapB[e.date] = e.kg; });
+
+    var allValues = seriesA.map(function (e) { return e.kg; }).concat(seriesB.map(function (e) { return e.kg; }));
+    var range = niceRange(Math.min.apply(null, allValues), Math.max.apply(null, allValues));
+
+    var xCount = allDates.length;
+    function xPos(i) { return padding.left + (xCount === 1 ? plotW / 2 : (plotW * i) / (xCount - 1)); }
+    function yPos(v) { return padding.top + plotH - ((v - range.min) / (range.max - range.min)) * plotH; }
+
+    // --- Gitterlinien + Y-Achsenbeschriftung -------------------------------
+    ctx.strokeStyle = colorBorder;
+    ctx.fillStyle = colorInk;
+    ctx.font = '11px ' + (styles.getPropertyValue('--font-body') || 'sans-serif');
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    var steps = 4;
+    for (var s = 0; s <= steps; s++) {
+      var v = range.min + ((range.max - range.min) * s) / steps;
+      var y = yPos(v);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(cssWidth - padding.right, y);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillText(Utils.round1(v).toFixed(1), padding.left - 8, y);
+    }
+
+    // --- X-Achsenbeschriftung -------------------------------------------------
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    var labelIdxs = xCount <= 2 ? [0, xCount - 1] : [0, Math.floor((xCount - 1) / 2), xCount - 1];
+    labelIdxs.forEach(function (i) {
+      ctx.fillText(Utils.formatDateShort(allDates[i]), xPos(i), cssHeight - padding.bottom + 8);
+    });
+
+    // --- Eine Messreihe zeichnen (Linie + Punkte, Lücken an fehlenden Terminen) --
+    function drawSeries(map, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      var drawing = false;
+      allDates.forEach(function (d, i) {
+        if (map[d] == null) { drawing = false; return; }
+        var px = xPos(i), py = yPos(map[d]);
+        if (!drawing) { ctx.moveTo(px, py); drawing = true; } else { ctx.lineTo(px, py); }
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      allDates.forEach(function (d, i) {
+        if (map[d] == null) return;
+        var px = xPos(i), py = yPos(map[d]);
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    drawSeries(mapA, colorA);
+    drawSeries(mapB, colorB);
+  }
+
+  window.WeightChart = { draw: draw, drawDual: drawDual };
 })();

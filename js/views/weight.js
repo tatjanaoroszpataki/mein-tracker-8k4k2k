@@ -143,22 +143,29 @@
 
   function renderWaistTab(root, entries) {
     var waistEntries = entries.filter(function (e) { return e.waistCm != null; });
-    var chartEntries = waistEntries.map(function (e) { return { date: e.date, kg: e.waistCm }; });
-    var rows = waistEntries.slice().reverse().slice(0, 10).map(function (e) {
-      return '<li class="shop-item"><span style="flex:1">' + Utils.formatDateLong(e.date) + '</span>' +
-        '<strong>' + Utils.round1(e.waistCm).toLocaleString('de-DE', { minimumFractionDigits: 1 }) + ' cm</strong>' +
-        (e.hipCm != null ? '<span class="text-sm text-soft" style="margin-left:var(--space-3);">Hüfte: ' + Utils.round1(e.hipCm).toLocaleString('de-DE', { minimumFractionDigits: 1 }) + ' cm</span>' : '') +
-      '</li>';
-    }).join('');
+    var hipEntries = entries.filter(function (e) { return e.hipCm != null; });
+    var hasAny = waistEntries.length || hipEntries.length;
+
+    var rows = entries.filter(function (e) { return e.waistCm != null || e.hipCm != null; })
+      .slice().reverse().slice(0, 10).map(function (e) {
+        return '<li class="shop-item"><span style="flex:1">' + Utils.formatDateLong(e.date) + '</span>' +
+          (e.waistCm != null ? '<strong>Taille: ' + Utils.round1(e.waistCm).toLocaleString('de-DE', { minimumFractionDigits: 1 }) + ' cm</strong>' : '<span class="text-soft text-sm">Taille: –</span>') +
+          '<span class="text-sm text-soft" style="margin-left:var(--space-3);">' + (e.hipCm != null ? 'Hüfte: ' + Utils.round1(e.hipCm).toLocaleString('de-DE', { minimumFractionDigits: 1 }) + ' cm' : 'Hüfte: –') + '</span>' +
+        '</li>';
+      }).join('');
 
     return '<div class="card" style="margin-top: var(--space-4);">' +
       '<p class="text-sm text-soft mt-0">Das Gewicht allein sagt nicht alles — besonders bei Krafttraining kann sich der Umfang verändern, auch wenn die Waage stillsteht.</p>' +
-      (waistEntries.length ?
-        '<h3>Taillenumfang</h3>' +
+      (hasAny ?
+        '<h3>Taille &amp; Hüfte</h3>' +
         '<div class="chart-wrap"><canvas id="waist-canvas" height="220"></canvas></div>' +
+        '<div class="chart-legend">' +
+          '<span class="chart-legend__item"><span class="chart-legend__swatch" style="background:var(--color-primary)"></span>Taille</span>' +
+          '<span class="chart-legend__item"><span class="chart-legend__swatch" style="background:var(--color-plum)"></span>Hüfte</span>' +
+        '</div>' +
         '<h3 style="margin-top: var(--space-6);">Letzte Einträge</h3>' +
         '<ul class="stack" style="gap:0;">' + rows + '</ul>'
-        : '<div class="empty-state">' + Icons.empty(40) + '<p>Noch keine Taillenmaße erfasst — trag beim Gewicht-Eintrag oben einfach den Umfang mit ein.</p></div>') +
+        : '<div class="empty-state">' + Icons.empty(40) + '<p>Noch keine Maße erfasst — trag beim Gewicht-Eintrag oben einfach Taille und/oder Hüfte mit ein.</p></div>') +
     '</div>';
   }
 
@@ -179,8 +186,8 @@
         '<form id="weight-form" class="input-row">' +
           '<div class="field" style="margin-bottom:0;"><label for="w-date">Datum</label><input class="input" id="w-date" type="date" value="' + Utils.todayISO() + '" max="' + Utils.todayISO() + '"></div>' +
           '<div class="field" style="margin-bottom:0;"><label for="w-kg">Gewicht (kg)</label><input class="input" id="w-kg" type="number" step="0.1" min="30" max="300" placeholder="z. B. 92.4" required></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="w-waist">Taille (cm, optional)</label><input class="input" id="w-waist" type="number" step="0.5" min="40" max="200" placeholder="z. B. 98"></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="w-hip">Hüfte (cm, optional)</label><input class="input" id="w-hip" type="number" step="0.5" min="40" max="200" placeholder="optional"></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="w-waist">Taille (cm, optional)</label><input class="input" id="w-waist" type="number" step="0.1" min="40" max="200" placeholder="z. B. 98.5"></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="w-hip">Hüfte (cm, optional)</label><input class="input" id="w-hip" type="number" step="0.1" min="40" max="200" placeholder="optional"></div>' +
           '<button class="btn btn--primary" type="submit">' + Icons.plus(16) + ' Eintragen</button>' +
         '</form>' +
       '</div>' +
@@ -218,9 +225,15 @@
     if (state.tab === 'taille') {
       var waistCanvas = document.getElementById('waist-canvas');
       if (waistCanvas) {
-        var waistEntries = entries.filter(function (e) { return e.waistCm != null; })
+        var waistSeries = entries.filter(function (e) { return e.waistCm != null; })
           .map(function (e) { return { date: e.date, kg: e.waistCm }; });
-        WeightChart.draw(waistCanvas, waistEntries, null);
+        var hipSeries = entries.filter(function (e) { return e.hipCm != null; })
+          .map(function (e) { return { date: e.date, kg: e.hipCm }; });
+        // Canvas versteht kein var(...) — Token-Werte vorher auflösen.
+        var rootStyles = getComputedStyle(document.documentElement);
+        var waistColor = rootStyles.getPropertyValue('--color-primary').trim() || '#1F6F5C';
+        var hipColor = rootStyles.getPropertyValue('--color-plum').trim() || '#6B3F5C';
+        WeightChart.drawDual(waistCanvas, waistSeries, hipSeries, waistColor, hipColor);
       }
     }
 
@@ -299,7 +312,12 @@
           if (waistCanvasEl) {
             var waistEntries = currentEntries.filter(function (e) { return e.waistCm != null; })
               .map(function (e) { return { date: e.date, kg: e.waistCm }; });
-            WeightChart.draw(waistCanvasEl, waistEntries, null);
+            var hipEntries = currentEntries.filter(function (e) { return e.hipCm != null; })
+              .map(function (e) { return { date: e.date, kg: e.hipCm }; });
+            var rs = getComputedStyle(document.documentElement);
+            WeightChart.drawDual(waistCanvasEl, waistEntries, hipEntries,
+              rs.getPropertyValue('--color-primary').trim() || '#1F6F5C',
+              rs.getPropertyValue('--color-plum').trim() || '#6B3F5C');
           }
         }
       }, 150));
