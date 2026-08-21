@@ -11,7 +11,6 @@
     { route: 'gewicht', label: 'Gewicht', icon: Icons.scale },
     { route: 'lebensmittel', label: 'Essen', icon: Icons.apple },
     { route: 'wochenplaner', label: 'Rezepte', icon: Icons.book },
-    { route: 'wasser', label: 'Wasser', icon: Icons.drop },
     { route: 'bewegung', label: 'Bewegung', icon: Icons.figure },
     { route: 'wissen', label: 'Wissen', icon: Icons.lightbulb }
   ];

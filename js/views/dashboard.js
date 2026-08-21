@@ -27,11 +27,21 @@
     return { last: last, delta: delta, weekTrend: weekTrend };
   }
 
+  var GLASS_ML = 250; // ein Tap = ein Glas, wie bisher auf der (jetzt entfernten) Wasser-Seite
+
   function waterToday() {
     var goal = Storage.read(Storage.KEYS.waterGoalMl, 2000);
     var log = Storage.read(Storage.KEYS.waterLog, {});
     var ml = log[Utils.todayISO()] || 0;
     return { ml: ml, goal: goal, pct: goal ? ml / goal : 0 };
+  }
+
+  function addWaterMl(delta) {
+    var log = Storage.read(Storage.KEYS.waterLog, {});
+    var today = Utils.todayISO();
+    log[today] = Math.max(0, (log[today] || 0) + delta);
+    Storage.write(Storage.KEYS.waterLog, log);
+    Storage.markActiveToday();
   }
 
   function exerciseToday() {
@@ -247,7 +257,11 @@
             Utils.progressRingSVG(water.pct, 84, 9, 'var(--color-surface-sunken)', 'var(--color-primary)') +
             '<div class="progress-ring__label">' + Math.round(water.pct * 100) + '%<small>Wasser</small></div>' +
           '</div>' +
-          '<div class="text-sm text-soft">' + (water.ml / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' / ' + (water.goal / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' l</div>' +
+          '<div class="text-sm text-soft" style="margin-bottom: var(--space-2);">' + (water.ml / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' / ' + (water.goal / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' l</div>' +
+          '<div style="display:flex; align-items:center; justify-content:center; gap: var(--space-2);">' +
+            '<button class="btn btn--icon btn--secondary" id="water-minus" aria-label="Ein Glas Wasser abziehen">' + Icons.minus(14) + '</button>' +
+            '<button class="btn btn--icon btn--secondary" id="water-plus" aria-label="Ein Glas Wasser hinzufügen">' + Icons.plus(14) + '</button>' +
+          '</div>' +
         '</div>' +
         '<div class="card card--tight" style="text-align:center;">' +
           '<div class="progress-ring" style="margin: 0 auto var(--space-2);">' +
@@ -266,7 +280,6 @@
       '</div>' +
 
       '<div class="chip-row" style="margin-top: var(--space-5); margin-bottom:0;">' +
-        '<a class="btn btn--secondary btn--sm" href="#/wasser">' + Icons.drop(16) + ' Wasser eintragen</a>' +
         '<a class="btn btn--secondary btn--sm" href="#/bewegung">' + Icons.figure(16) + ' Übung abhaken</a>' +
         '<a class="btn btn--secondary btn--sm" href="#/gewicht">' + Icons.scale(16) + ' Gewicht eintragen</a>' +
       '</div>' +
@@ -311,6 +324,9 @@
 
     root.querySelector('#sleep-minus').addEventListener('click', function () { adjustSleep(-0.5); App.afterAction(); render(root); });
     root.querySelector('#sleep-plus').addEventListener('click', function () { adjustSleep(0.5); App.afterAction(); render(root); });
+
+    root.querySelector('#water-minus').addEventListener('click', function () { addWaterMl(-GLASS_ML); App.afterAction(); render(root); });
+    root.querySelector('#water-plus').addEventListener('click', function () { addWaterMl(GLASS_ML); App.afterAction(); render(root); });
   }
 
   function greeting() {

@@ -212,13 +212,6 @@
       '<hr class="hr">' +
       '<div id="calories-embed"></div>';
 
-    // Kalorienbedarf-Rechner direkt unter dem Gewicht angehängt (kein
-    // eigener Menüpunkt mehr) — Views.kalorien rendert komplett
-    // eigenständig in den übergebenen Container hinein.
-    if (window.Views.kalorien) {
-      Views.kalorien.render(document.getElementById('calories-embed'));
-    }
-
     if (state.tab === 'gewicht' && entries.length) {
       WeightChart.draw(document.getElementById('weight-canvas'), entries, goal);
     }
@@ -267,6 +260,20 @@
         render(root);
       });
     });
+
+    // Kalorienbedarf-Rechner direkt unter dem Gewicht angehängt (kein
+    // eigener Menüpunkt mehr) — Views.kalorien rendert komplett
+    // eigenständig in den übergebenen Container hinein. Bewusst ganz am
+    // Ende und in try/catch: falls das je aus irgendeinem Grund einen
+    // Fehler wirft, sollen die wichtigeren Bindungen oben (Gewicht
+    // eintragen, Ziel speichern usw.) trotzdem sicher funktionieren.
+    try {
+      if (window.Views.kalorien) {
+        Views.kalorien.render(document.getElementById('calories-embed'));
+      }
+    } catch (err) {
+      console.warn('Kalorienbedarf-Bereich konnte nicht gerendert werden', err);
+    }
 
     if (!resizeBound) {
       resizeBound = true;

@@ -414,13 +414,6 @@
 
       (state.picker ? pickerHtml() : '');
 
-    // Rezeptideen direkt unter Wochenplan + Einkaufsliste angehängt (kein
-    // eigener Menüpunkt mehr) — Views.rezepte rendert komplett
-    // eigenständig in den übergebenen Container hinein.
-    if (window.Views.rezepte) {
-      Views.rezepte.render(document.getElementById('recipes-embed'));
-    }
-
     // Wochennavigation
     root.querySelector('#prev-week').addEventListener('click', function () {
       state.weekStart = Utils.addDays(state.weekStart, -7);
@@ -495,6 +488,20 @@
     });
 
     bindPickerEvents(root);
+
+    // Rezeptideen direkt unter Wochenplan + Einkaufsliste angehängt (kein
+    // eigener Menüpunkt mehr) — Views.rezepte rendert komplett
+    // eigenständig in den übergebenen Container hinein. Bewusst ganz am
+    // Ende und in try/catch: falls das je einen Fehler wirft, sollen die
+    // wichtigeren Bindungen oben (Wochenplan, Einkaufsliste) trotzdem
+    // sicher funktionieren.
+    try {
+      if (window.Views.rezepte) {
+        Views.rezepte.render(document.getElementById('recipes-embed'));
+      }
+    } catch (err) {
+      console.warn('Rezepte-Bereich konnte nicht gerendert werden', err);
+    }
   }
 
   window.Views = window.Views || {};
