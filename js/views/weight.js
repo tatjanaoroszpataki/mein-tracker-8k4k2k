@@ -277,8 +277,31 @@
 
     if (!resizeBound) {
       resizeBound = true;
+      var lastWidth = window.innerWidth;
       window.addEventListener('resize', Utils.debounce(function () {
-        if (document.getElementById('view-gewicht').classList.contains('is-active')) render(root);
+        // Nur auf echte Breitenänderungen reagieren (Drehung, Fenster
+        // verkleinert) — nicht auf reine Höhenänderungen. Mobile Browser
+        // feuern nämlich auch "resize", wenn die Bildschirmtastatur auf-
+        // oder zuklappt; ein voller render() hätte dann das gerade
+        // fokussierte Eingabefeld zerstört und die Tastatur sofort wieder
+        // zugeklappt. Deshalb hier gezielt nur die Charts neu zeichnen,
+        // nicht die ganze Seite neu aufbauen.
+        if (window.innerWidth === lastWidth) return;
+        lastWidth = window.innerWidth;
+        if (!document.getElementById('view-gewicht').classList.contains('is-active')) return;
+
+        var currentEntries = getEntries();
+        if (state.tab === 'gewicht') {
+          var wc = document.getElementById('weight-canvas');
+          if (wc && currentEntries.length) WeightChart.draw(wc, currentEntries, getGoal());
+        } else if (state.tab === 'taille') {
+          var waistCanvasEl = document.getElementById('waist-canvas');
+          if (waistCanvasEl) {
+            var waistEntries = currentEntries.filter(function (e) { return e.waistCm != null; })
+              .map(function (e) { return { date: e.date, kg: e.waistCm }; });
+            WeightChart.draw(waistCanvasEl, waistEntries, null);
+          }
+        }
       }, 150));
     }
   }
