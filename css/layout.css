@@ -1,0 +1,240 @@
+/* =========================================================================
+   LAYOUT — App-Gerüst, Header, Navigation, View-Container
+   Mobile-first: unten fixierte Tab-Leiste. Ab Tablet/Desktop wird daraus
+   eine linke Sidebar mit vollen Labels.
+   ========================================================================= */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header ------------------------------------------------------------ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  background: var(--color-paper);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header__mark {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.app-header__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+.app-header__streak {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-light);
+  color: var(--color-accent-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Hauptbereich -------------------------------------------------------- */
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) calc(var(--nav-height) + var(--space-6));
+}
+
+.view {
+  display: none;
+  animation: view-in var(--duration-base) var(--ease-standard);
+}
+
+.view.is-active {
+  display: block;
+}
+
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view { animation: none; }
+}
+
+.view-header {
+  margin-bottom: var(--space-5);
+}
+
+.view-header__eyebrow {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: var(--space-1);
+}
+
+.view-header p {
+  color: var(--color-ink-soft);
+  max-width: 52ch;
+}
+
+/* ---- Navigation (mobile: bottom tab bar) -------------------------------- */
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  overflow-x: hidden;
+  height: var(--nav-height);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+/* Logo und Streak-Badge sind für die Desktop-Sidebar gedacht (siehe unten)
+   und werden dort per Media Query wieder eingeblendet. In der mobilen
+   Bottom-Bar bleiben sie ausgeblendet, sonst fressen sie Platz von den
+   Tabs weg und die Leiste müsste seitlich gescrollt werden — genau das
+   führt auf dem Handy dazu, dass sich Taps wie "geht nicht" anfühlen. */
+.app-nav__brand,
+.app-nav__streak {
+  display: none;
+}
+
+.app-nav__item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  color: var(--color-ink-faint);
+  border-radius: var(--radius-sm);
+}
+
+.app-nav__item svg {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+}
+
+.app-nav__item span {
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+.app-nav__item.is-active {
+  color: var(--color-primary);
+}
+
+.app-nav__item.is-active svg {
+  transform: translateY(-1px);
+}
+
+/* ---- Desktop / Tablet: Sidebar statt Bottom-Bar ------------------------- */
+@media (min-width: 860px) {
+  .app-shell {
+    flex-direction: row;
+  }
+
+  .app-header {
+    display: none;
+  }
+
+  .app-nav {
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 232px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: var(--space-5) var(--space-3);
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+    box-shadow: none;
+    padding-bottom: var(--space-5);
+    gap: var(--space-1);
+  }
+
+  .app-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3) var(--space-5);
+  }
+
+  .app-nav__brand svg { width: 32px; height: 32px; }
+  .app-nav__brand span {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  .app-nav__item {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-width: 0;
+    gap: var(--space-3);
+    padding: 10px 14px;
+  }
+
+  .app-nav__item span {
+    font-size: 0.92rem;
+  }
+
+  .app-nav__item.is-active {
+    background: var(--color-primary-light);
+  }
+
+  .app-nav__streak {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-light);
+    color: var(--color-accent-dark);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .app-main {
+    max-width: 760px;
+    padding: var(--space-7) var(--space-6);
+  }
+}
+
+@media (min-width: 1100px) {
+  .app-main { max-width: 840px; padding: var(--space-7) var(--space-8); }
+}

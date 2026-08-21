@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Schrittweise — gezielt und dauerhaft abnehmen</title>
+  <meta name="description" content="Eine lokale, offline laufende Begleit-App zum Abnehmen: Gewichtsverlauf, Lebensmittel-Ampel, Einkaufsliste, Rezepte, Wasser-Tracking und alltagstaugliche Mini-Übungen.">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11.25' fill='%231F6F5C'/%3E%3Ccircle cx='12' cy='7.4' r='2.1' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3Cpath d='M12 9.6V14.2M12 10.8L8.7 9.6M12 10.8L15.3 9.6M12 14.2L9 18.4M12 14.2L15 18.4' stroke='%23fff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <!-- PWA: installierbar, offlinefähig -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1F6F5C">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Schrittweise">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Mobile Header (auf Desktop per CSS ausgeblendet, dort übernimmt die Sidebar) -->
+    <header class="app-header" id="app-header"></header>
+
+    <!-- Navigation: wird per JS befüllt (mobile Bottom-Bar / Desktop-Sidebar) -->
+    <nav class="app-nav" id="app-nav" aria-label="Hauptnavigation"></nav>
+
+    <main class="app-main" id="app-main">
+      <section class="view" id="view-dashboard"></section>
+      <section class="view" id="view-gewicht"></section>
+      <section class="view" id="view-kalorien"></section>
+      <section class="view" id="view-lebensmittel"></section>
+      <section class="view" id="view-wochenplaner"></section>
+      <section class="view" id="view-rezepte"></section>
+      <section class="view" id="view-wasser"></section>
+      <section class="view" id="view-bewegung"></section>
+      <section class="view" id="view-wissen"></section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Kernbausteine -->
+  <script src="js/storage.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/chart.js"></script>
+
+  <!-- Daten -->
+  <script src="js/data/foods.js"></script>
+  <script src="js/data/recipes.js"></script>
+  <script src="js/data/exercises.js"></script>
+  <script src="js/data/knowledge.js"></script>
+  <script src="js/custom-recipes.js"></script>
+  <script src="js/custom-foods.js"></script>
+
+  <!-- Views -->
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/weight.js"></script>
+  <script src="js/views/calories.js"></script>
+  <script src="js/views/foods.js"></script>
+  <script src="js/views/wochenplaner.js"></script>
+  <script src="js/views/recipes.js"></script>
+  <script src="js/views/water.js"></script>
+  <script src="js/views/movement.js"></script>
+  <script src="js/views/knowledge.js"></script>
+
+  <!-- Lokaler Such-Assistent (Stichwortsuche, keine externe KI) -->
+  <script src="js/search.js"></script>
+  <script src="js/assistant.js"></script>
+
+  <!-- Routing + Bootstrapping -->
+  <script src="js/router.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

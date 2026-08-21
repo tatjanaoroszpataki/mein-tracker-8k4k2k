@@ -1,0 +1,854 @@
+/* =========================================================================
+   COMPONENTS — wiederverwendbare UI-Bausteine
+   ========================================================================= */
+
+/* ---- Karten -------------------------------------------------------------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.card + .card { margin-top: var(--space-4); }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.card--tight { padding: var(--space-4); }
+
+/* ---- Buttons -------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 11px 20px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: 1.5px solid transparent;
+  transition: transform var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn--primary:hover { background: var(--color-primary-dark); }
+
+.btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+.btn--secondary:hover { border-color: var(--color-primary); color: var(--color-primary-dark); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-ink-soft);
+  padding: 8px 12px;
+}
+.btn--ghost:hover { color: var(--color-primary-dark); }
+
+.btn--accent {
+  background: var(--color-accent);
+  color: #fff;
+}
+.btn--accent:hover { background: var(--color-accent-dark); }
+
+.btn--sm { padding: 7px 14px; font-size: 0.82rem; }
+.btn--block { width: 100%; }
+.btn--icon { padding: 9px; border-radius: var(--radius-full); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- Formulare ------------------------------------------------------------ */
+.field {
+  margin-bottom: var(--space-4);
+}
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  margin-bottom: var(--space-2);
+}
+
+.input, select.input, textarea.input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.input:focus { border-color: var(--color-primary); }
+
+.input-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.input-row > * { flex: 1 1 140px; }
+
+/* ---- Badges / Ampel ------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.badge--go { background: var(--color-go-bg); color: var(--color-go-ink); }
+.badge--caution { background: var(--color-caution-bg); color: var(--color-caution-ink); }
+.badge--stop { background: var(--color-stop-bg); color: var(--color-stop-ink); }
+
+.badge__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.badge--go .badge__dot { background: var(--color-go); }
+.badge--caution .badge__dot { background: var(--color-caution); }
+.badge--stop .badge__dot { background: var(--color-stop); }
+
+/* ---- Stat-Kacheln (Dashboard) --------------------------------------------- */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat__label {
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}
+.stat__value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.stat__meta {
+  font-size: 0.8rem;
+  color: var(--color-ink-faint);
+}
+
+/* ---- Fortschrittsring ------------------------------------------------------ */
+.progress-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.progress-ring__label {
+  position: absolute;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.progress-ring__label small {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.68rem;
+  color: var(--color-ink-soft);
+}
+
+/* ---- Fortschrittsbalken ------------------------------------------------- */
+.progress-bar {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-sunken);
+  overflow: hidden;
+}
+.progress-bar__fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-base) var(--ease-standard);
+}
+
+/* ---- Filter-Chips ---------------------------------------------------------- */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.chip {
+  padding: 7px 15px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+.chip.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+/* Chip, die ein verstecktes Radio/Checkbox umschließt (z. B. Geschlecht-
+   Auswahl): Fokus-Ring auf das Label übertragen, da das Input selbst
+   visuell versteckt ist. */
+.chip:has(input:focus-visible) {
+  outline: 2.5px solid var(--color-plum);
+  outline-offset: 2px;
+}
+
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  margin-bottom: var(--space-4);
+}
+.search-input svg { width: 18px; height: 18px; color: var(--color-ink-faint); flex-shrink: 0; }
+.search-input input {
+  border: none;
+  background: none;
+  width: 100%;
+  outline: none;
+}
+
+/* ---- Lebensmittel-Liste ----------------------------------------------------- */
+.food-group {
+  margin-bottom: var(--space-6);
+}
+.food-group__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+.food-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.food-item:last-child { border-bottom: none; }
+.food-item__main { flex: 1; min-width: 0; }
+.food-item__name { font-weight: 700; margin-bottom: 2px; }
+.food-item__note { font-size: 0.86rem; color: var(--color-ink-soft); }
+.food-item__actions { flex-shrink: 0; }
+
+/* ---- Einkaufsliste --------------------------------------------------------- */
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.shop-item__check {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  border: 2px solid var(--color-border-strong);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: transparent;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.shop-item__check svg { width: 15px; height: 15px; }
+.shop-item.is-checked .shop-item__check {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.shop-item.is-checked .shop-item__name {
+  text-decoration: line-through;
+  color: var(--color-ink-faint);
+}
+.shop-item__name { flex: 1; }
+.shop-item__remove { color: var(--color-ink-faint); padding: 6px; }
+.shop-item__remove:hover { color: var(--color-stop); }
+
+/* ---- Rezeptkarten ------------------------------------------------------------ */
+.recipe-card {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  margin-bottom: var(--space-4);
+}
+.recipe-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+.recipe-card__title { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 3px; }
+.recipe-card__meta {
+  display: flex;
+  gap: var(--space-3);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  flex-wrap: wrap;
+}
+.recipe-card__body {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  display: none;
+}
+.recipe-card.is-open .recipe-card__body { display: block; }
+.recipe-card.is-open .recipe-card__chevron { transform: rotate(180deg); }
+.recipe-card__chevron { transition: transform var(--duration-base) var(--ease-standard); flex-shrink: 0; }
+.recipe-card__section-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: var(--space-3) 0 var(--space-2);
+}
+.recipe-card__section-title:first-child { margin-top: 0; }
+.recipe-card__ingredients li, .recipe-card__steps li {
+  padding: 3px 0;
+  font-size: 0.92rem;
+}
+.recipe-card__ingredients li::before { content: "· "; color: var(--color-primary); font-weight: 700; }
+.recipe-card__why {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-primary-tint);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  color: var(--color-primary-dark);
+}
+
+/* Nährwerte: bewusst zurückhaltend — kleine, gedämpfte Zeile am Kartenrand,
+   nicht die groß herausgestellte "Warum gut"-Box. */
+.recipe-card__nutrition {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-border);
+  font-size: 0.76rem;
+  color: var(--color-ink-faint);
+}
+.recipe-card__nutrition-values span:not(:last-child)::after {
+  content: '·';
+  margin: 0 8px;
+  color: var(--color-border-strong);
+}
+.recipe-card__nutrition-note {
+  display: block;
+  font-style: italic;
+  margin-top: 3px;
+}
+
+/* ---- Übungen (Bewegung) ------------------------------------------------------ */
+.exercise-card {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  margin-bottom: var(--space-3);
+  align-items: center;
+}
+.exercise-card__icon {
+  width: 56px; height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-tint);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-primary-dark);
+}
+.exercise-card__icon svg { width: 40px; height: 40px; }
+.exercise-card__body { flex: 1; min-width: 0; }
+.exercise-card__trigger {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-plum);
+  margin-bottom: 2px;
+}
+.exercise-card__name { font-weight: 700; margin-bottom: 2px; }
+.exercise-card__desc { font-size: 0.86rem; color: var(--color-ink-soft); }
+
+/* Auswahl-Häkchen ("Teil meines Workouts") — bewusst in Pflaume statt Grün,
+   damit es sich klar vom "heute erledigt"-Häkchen unterscheidet. */
+.exercise-card__select {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 2px solid var(--color-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+.exercise-card__select svg { width: 14px; height: 14px; }
+.exercise-card.is-selected .exercise-card__select {
+  background: var(--color-plum);
+  border-color: var(--color-plum);
+  color: #fff;
+}
+
+.exercise-card__done {
+  flex-shrink: 0;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  color: transparent;
+}
+.exercise-card__done svg { width: 20px; height: 20px; }
+.exercise-card.is-done .exercise-card__done {
+  background: var(--color-go);
+  border-color: var(--color-go);
+  color: #fff;
+}
+.exercise-card.is-done { opacity: 0.72; }
+
+/* Mini-Übungen: Plus-Symbol statt "erledigt"-Häkchen — fügt zur heutigen
+   Übersicht hinzu, ohne wie eine Abhak-Checkbox auszusehen. Bewusst
+   eckig statt rund und in Primärfarbe statt Grün, um sich klar vom
+   "heute erledigt"-Häkchen der Trainingsübungen zu unterscheiden. */
+.exercise-card__add {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-faint);
+}
+.exercise-card__add svg { width: 18px; height: 18px; }
+.exercise-card.is-added .exercise-card__add {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.exercise-card.is-added { background: var(--color-primary-tint); }
+
+.workout-block { margin-bottom: var(--space-5); }
+.workout-block__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  margin-bottom: var(--space-3);
+}
+.workout-block__title span { font-size: 0.82rem; color: var(--color-ink-soft); font-family: var(--font-body); font-weight: 600; }
+
+/* ---- Wasser --------------------------------------------------------------- */
+.water-glasses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.water-tap-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  font-weight: 700;
+}
+.water-tap-btn:hover { border-color: var(--color-primary); }
+.water-tap-btn svg { width: 22px; height: 22px; color: var(--color-primary); }
+
+/* ---- Toast / Erfolgsmeldung ------------------------------------------------ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-height) + 14px);
+  transform: translate(-50%, 12px);
+  background: var(--color-ink);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-standard),
+              transform var(--duration-base) var(--ease-standard);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 90vw;
+}
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast svg { width: 18px; height: 18px; color: var(--color-accent-light); flex-shrink: 0; }
+
+@media (min-width: 860px) {
+  .toast { bottom: 24px; }
+}
+
+/* ---- Wissen: Inhaltsverzeichnis + Kapitel ----------------------------------- */
+.knowledge-toc__link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.knowledge-toc__link:hover { color: var(--color-primary-dark); }
+.knowledge-toc__num {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  min-width: 22px;
+}
+
+.knowledge-chapter {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-5) 0;
+  scroll-margin-top: var(--space-4);
+}
+.knowledge-chapter:first-child { padding-top: 0; }
+.knowledge-chapter:last-child { border-bottom: none; }
+
+.knowledge-chapter__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+}
+.knowledge-chapter__num {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-primary-light);
+  -webkit-text-stroke: 1px var(--color-primary);
+}
+.knowledge-chapter__title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.2rem;
+}
+.knowledge-chapter__chevron {
+  flex-shrink: 0;
+  color: var(--color-ink-faint);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.knowledge-chapter__chevron.is-open { transform: rotate(180deg); }
+
+.knowledge-chapter__body {
+  margin-top: var(--space-4);
+  padding-left: calc(1.3rem + var(--space-3));
+  max-width: 68ch;
+}
+.knowledge-chapter__body p {
+  line-height: 1.7;
+  color: var(--color-ink);
+}
+.knowledge-chapter__body p:last-child { margin-bottom: 0; }
+
+/* ---- Backup-Hinweis (Dashboard) --------------------------------------------- */
+/* Bewusst ruhig: gleiche Tint-Farbe wie andere "Warum gut"-Infoboxen, kein
+   Warn-Rot, kein Ausrufezeichen-Icon — liest sich wie ein normaler Hinweis,
+   nicht wie ein Alarm. */
+.backup-hint {
+  background: var(--color-primary-tint);
+  border-color: var(--color-primary-light);
+}
+.backup-hint__icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-primary-dark);
+}
+
+/* ---- Wochenplaner ------------------------------------------------------------ */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.week-nav__label { font-weight: 700; text-align: center; flex: 1; }
+.week-nav__label small { display: block; font-weight: 600; color: var(--color-ink-soft); font-size: 0.78rem; }
+
+.plan-days {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: 2px;
+}
+.plan-day {
+  flex: 1 1 0;
+  min-width: 44px;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+.plan-day.is-active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.plan-day.is-today:not(.is-active) { border-color: var(--color-primary); color: var(--color-primary-dark); }
+
+.plan-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--color-border-strong);
+  margin-bottom: var(--space-3);
+}
+.plan-slot.is-filled { border-style: solid; border-color: var(--color-border); background: var(--color-surface); }
+.plan-slot__meal {
+  flex-shrink: 0;
+  width: 78px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.plan-slot__add {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-ink-faint);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+.plan-slot__content {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 2px 0;
+}
+.plan-slot__title {
+  display: block;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+.plan-slot__remove { flex-shrink: 0; color: var(--color-ink-faint); padding: 6px; }
+.plan-slot__remove:hover { color: var(--color-stop); }
+
+/* Picker-Sheet (gleiche Bauweise wie der Assistent, eigene Klassen) */
+.plan-picker-backdrop {
+  position: fixed; inset: 0; z-index: 38;
+  background: rgba(20, 26, 22, 0.35);
+}
+.plan-picker {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 39;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.plan-picker__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  flex-shrink: 0;
+}
+.plan-picker__header strong { font-family: var(--font-display); font-size: 1.05rem; }
+.plan-picker__tabs { padding: 0 var(--space-4); flex-shrink: 0; margin-bottom: 0; }
+.plan-picker__body { padding: var(--space-3) var(--space-4) var(--space-6); overflow-y: auto; flex: 1; }
+
+.plan-picker__recipe-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.plan-picker__recipe-item:last-child { border-bottom: none; }
+.plan-picker__recipe-item strong { display: block; }
+.plan-picker__recipe-item span { font-size: 0.82rem; color: var(--color-ink-soft); }
+
+@media (min-width: 860px) {
+  .plan-picker-backdrop { }
+  .plan-picker {
+    left: auto; right: var(--space-6); bottom: var(--space-6);
+    width: 420px; max-height: 75vh;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Ampel-Farbe-Auswahl im "Lebensmittel hinzufügen"-Formular — jeder Button
+   trägt schon per Inline-Style seine Ampelfarbe als Rahmenfarbe, aktiv
+   wird der Rahmen dicker + der Hintergrund leicht abgesetzt. */
+.food-status-btn { font-weight: 600; }
+.food-status-btn.is-active { border-width: 2.5px; background: var(--color-surface-sunken); }
+
+/* ---- Assistent (Frag mich) ---------------------------------------------------
+   Schwebende Schaltfläche + Panel, auf jeder Seite erreichbar. Reine
+   lokale Stichwortsuche (js/search.js) über Lebensmittel, Rezepte,
+   Übungen und Wissen-Kapitel — kein externer Dienst.
+   ========================================================================= */
+.assistant-fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--nav-height) + var(--space-3));
+  z-index: 35;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.assistant-fab:hover { background: var(--color-primary-dark); }
+.assistant-fab:active { transform: scale(0.94); }
+
+.assistant-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 38;
+  background: rgba(20, 26, 22, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+.assistant-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+.assistant-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 39;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(100%);
+  transition: transform var(--duration-base) var(--ease-standard);
+  overflow: hidden;
+}
+.assistant-panel.is-open { transform: translateY(0); }
+
+.assistant-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  flex-shrink: 0;
+}
+.assistant-panel__header strong { font-family: var(--font-display); font-size: 1.1rem; }
+
+.assistant-panel__search { margin: 0 var(--space-4); flex-shrink: 0; }
+.assistant-panel__hint { padding: 0 var(--space-4); margin: var(--space-2) 0 0; flex-shrink: 0; }
+
+.assistant-panel__results {
+  padding: var(--space-3) var(--space-4) var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.assistant-result {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.assistant-result:last-child { border-bottom: none; }
+.assistant-result__badge { margin-bottom: 6px; }
+.assistant-result__title { font-weight: 700; margin-bottom: 2px; }
+.assistant-result__text { font-size: 0.86rem; color: var(--color-ink-soft); margin-bottom: var(--space-2); }
+.assistant-result__open { padding-left: 0; }
+
+.assistant-empty { padding: var(--space-2) 0; }
+
+@media (min-width: 860px) {
+  .assistant-fab {
+    right: var(--space-6);
+    bottom: var(--space-6);
+  }
+  .assistant-panel {
+    left: auto;
+    right: var(--space-6);
+    bottom: calc(52px + var(--space-4) + var(--space-3));
+    width: 380px;
+    max-height: 65vh;
+    border-radius: var(--radius-lg);
+    transform: translateY(16px) scale(0.98);
+    opacity: 0;
+    transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
+  }
+  .assistant-panel.is-open { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ---- Empty state ------------------------------------------------------------ */
+.empty-state {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+  color: var(--color-ink-soft);
+}
+.empty-state svg { width: 46px; height: 46px; margin: 0 auto var(--space-3); color: var(--color-ink-faint); }
+
+/* ---- Divider / utility ------------------------------------------------------ */
+.hr { height: 1px; background: var(--color-border); border: none; margin: var(--space-5) 0; }
+.text-soft { color: var(--color-ink-soft); }
+.text-sm { font-size: 0.86rem; }
+.mt-0 { margin-top: 0; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* ---- Chart-Container -------------------------------------------------------- */
+.chart-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+.chart-wrap canvas {
+  width: 100%;
+  display: block;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+.chart-legend__item { display: flex; align-items: center; gap: 6px; }
+.chart-legend__swatch { width: 12px; height: 3px; border-radius: 2px; }
