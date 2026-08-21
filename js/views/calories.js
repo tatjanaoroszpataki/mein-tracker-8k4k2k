@@ -66,7 +66,7 @@
       gender: gender ? gender.value : null,
       age: parseInt(root.querySelector('#cal-age').value, 10) || null,
       heightCm: parseFloat(root.querySelector('#cal-height').value) || null,
-      weightKg: parseFloat(root.querySelector('#cal-weight').value) || null,
+      weightKg: Utils.parseDecimal(root.querySelector('#cal-weight').value) || null,
       pal: parseFloat(root.querySelector('#cal-pal').value) || null
     };
   }
@@ -107,7 +107,7 @@
           '<div class="field">' +
             '<label for="cal-weight">Gewicht (kg)</label>' +
             '<div class="input-row" style="align-items:center;">' +
-              '<input class="input" id="cal-weight" type="number" step="0.1" min="30" max="300" value="' + prefillWeight + '">' +
+              '<input class="input" id="cal-weight" type="text" inputmode="decimal" value="' + prefillWeight + '">' +
               (latestTrackedWeight() ? '<button type="button" class="btn btn--secondary btn--sm" id="use-tracked-weight">' + Icons.scale(15) + ' Aktuelles Gewicht übernehmen</button>' : '') +
             '</div>' +
           '</div>' +

@@ -94,7 +94,7 @@
         '<h3 class="mt-0">Tagesziel</h3>' +
         '<form id="goal-water-form" class="input-row">' +
           '<div class="field" style="margin-bottom:0;"><label for="water-goal">Ziel in Litern</label>' +
-          '<input class="input" id="water-goal" type="number" step="0.1" min="0.5" max="6" value="' + (goal / 1000) + '"></div>' +
+          '<input class="input" id="water-goal" type="text" inputmode="decimal" value="' + (goal / 1000) + '"></div>' +
           '<button class="btn btn--secondary" type="submit">Speichern</button>' +
         '</form>' +
       '</div>' +
@@ -112,7 +112,7 @@
 
     root.querySelector('#goal-water-form').addEventListener('submit', function (ev) {
       ev.preventDefault();
-      var liters = parseFloat(document.getElementById('water-goal').value);
+      var liters = Utils.parseDecimal(document.getElementById('water-goal').value);
       if (!liters || liters <= 0) return;
       setGoal(Math.round(liters * 1000));
       Utils.toast('Tagesziel gespeichert');

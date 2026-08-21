@@ -46,6 +46,19 @@
     return Math.round(n * 10) / 10;
   }
 
+  /**
+   * Liest eine Dezimalzahl aus einem Text-Eingabefeld — akzeptiert sowohl
+   * Punkt als auch Komma als Trennzeichen. Wichtig, weil `<input
+   * type="number">` auf Android mit deutscher Tastatur oft ein Komma
+   * anbietet, das der HTML5-Zahlentyp selbst gar nicht akzeptiert — die
+   * Eingabe wird dann stillschweigend verworfen. Betroffene Felder nutzen
+   * deshalb `type="text" inputmode="decimal"` und parsen darüber.
+   */
+  function parseDecimal(str) {
+    if (str == null) return NaN;
+    return parseFloat(String(str).trim().replace(',', '.'));
+  }
+
   /** Formatiert eine Differenz im deutschen Zahlenformat, z. B. "-1,1 kg". */
   function formatDeltaKg(n) {
     var r = round1(n);
@@ -142,6 +155,7 @@
     toast: toast,
     progressRingSVG: progressRingSVG,
     formatDeltaKg: formatDeltaKg,
+    parseDecimal: parseDecimal,
     calcBMR: calcBMR,
     calcTDEE: calcTDEE
   };

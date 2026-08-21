@@ -134,7 +134,7 @@
       '<h3 class="mt-0">Zielgewicht</h3>' +
       '<form id="goal-form" class="input-row">' +
         '<div class="field" style="margin-bottom:0;"><label for="goal-kg">Zielgewicht (kg)</label>' +
-        '<input class="input" id="goal-kg" type="number" step="0.1" min="30" max="300" value="' + (goal && goal.targetKg ? goal.targetKg : '') + '" placeholder="z. B. 85"></div>' +
+        '<input class="input" id="goal-kg" type="text" inputmode="decimal" value="' + (goal && goal.targetKg ? goal.targetKg : '') + '" placeholder="z. B. 85"></div>' +
         '<button class="btn btn--secondary" type="submit">Speichern</button>' +
       '</form>' +
       progressHtml +
@@ -185,9 +185,9 @@
         '<h3 class="mt-0">Gewicht eintragen</h3>' +
         '<form id="weight-form" class="input-row">' +
           '<div class="field" style="margin-bottom:0;"><label for="w-date">Datum</label><input class="input" id="w-date" type="date" value="' + Utils.todayISO() + '" max="' + Utils.todayISO() + '"></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="w-kg">Gewicht (kg)</label><input class="input" id="w-kg" type="number" step="0.1" min="30" max="300" placeholder="z. B. 92.4" required></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="w-waist">Taille (cm, optional)</label><input class="input" id="w-waist" type="number" step="0.1" min="40" max="200" placeholder="z. B. 98.5"></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="w-hip">Hüfte (cm, optional)</label><input class="input" id="w-hip" type="number" step="0.1" min="40" max="200" placeholder="optional"></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="w-kg">Gewicht (kg)</label><input class="input" id="w-kg" type="text" inputmode="decimal" placeholder="z. B. 92,4" required></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="w-waist">Taille (cm, optional)</label><input class="input" id="w-waist" type="text" inputmode="decimal" placeholder="z. B. 98,5"></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="w-hip">Hüfte (cm, optional)</label><input class="input" id="w-hip" type="text" inputmode="decimal" placeholder="optional"></div>' +
           '<button class="btn btn--primary" type="submit">' + Icons.plus(16) + ' Eintragen</button>' +
         '</form>' +
       '</div>' +
@@ -240,10 +240,10 @@
     document.getElementById('weight-form').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var date = document.getElementById('w-date').value || Utils.todayISO();
-      var kg = parseFloat(document.getElementById('w-kg').value);
-      if (!kg || kg <= 0) return;
-      var waistVal = parseFloat(document.getElementById('w-waist').value);
-      var hipVal = parseFloat(document.getElementById('w-hip').value);
+      var kg = Utils.parseDecimal(document.getElementById('w-kg').value);
+      if (!kg || kg <= 0) { Utils.toast('Bitte ein gültiges Gewicht eingeben'); return; }
+      var waistVal = Utils.parseDecimal(document.getElementById('w-waist').value);
+      var hipVal = Utils.parseDecimal(document.getElementById('w-hip').value);
       upsertEntry(date, kg, isNaN(waistVal) ? null : waistVal, isNaN(hipVal) ? null : hipVal);
       Utils.toast('Gewicht gespeichert');
       App.afterAction();
@@ -253,8 +253,8 @@
     var goalForm = document.getElementById('goal-form');
     if (goalForm) goalForm.addEventListener('submit', function (ev) {
       ev.preventDefault();
-      var val = parseFloat(document.getElementById('goal-kg').value);
-      if (!val || val <= 0) return;
+      var val = Utils.parseDecimal(document.getElementById('goal-kg').value);
+      if (!val || val <= 0) { Utils.toast('Bitte ein gültiges Zielgewicht eingeben'); return; }
       setGoal(val);
       Utils.toast('Zielgewicht gespeichert');
       render(root);
