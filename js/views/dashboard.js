@@ -45,12 +45,12 @@
     var result = CalorieCalc.computeFromProfile(profile);
     if (!result) {
       return '<div class="stat"><span class="stat__label">Kalorienbedarf</span>' +
-        '<span class="stat__meta">Noch nicht berechnet — <a href="#/kalorien">jetzt berechnen</a></span></div>';
+        '<span class="stat__meta">Noch nicht berechnet — <a href="#/gewicht">jetzt berechnen</a></span></div>';
     }
     return '<div class="stat">' +
       '<span class="stat__label">Tagesbedarf (TDEE)</span>' +
       '<span class="stat__value">' + result.tdee.toLocaleString('de-DE') + ' kcal</span>' +
-      '<span class="stat__meta">Zum Abnehmen: ca. ' + result.deficitLow.toLocaleString('de-DE') + '–' + result.deficitHigh.toLocaleString('de-DE') + ' kcal · <a href="#/kalorien">Details</a></span>' +
+      '<span class="stat__meta">Zum Abnehmen: ca. ' + result.deficitLow.toLocaleString('de-DE') + '–' + result.deficitHigh.toLocaleString('de-DE') + ' kcal · <a href="#/gewicht">Details</a></span>' +
     '</div>';
   }
 

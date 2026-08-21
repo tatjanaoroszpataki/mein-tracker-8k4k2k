@@ -9,10 +9,8 @@
   var NAV_ITEMS = [
     { route: 'dashboard', label: 'Übersicht', icon: Icons.home },
     { route: 'gewicht', label: 'Gewicht', icon: Icons.scale },
-    { route: 'kalorien', label: 'Kalorien', icon: Icons.calculator },
     { route: 'lebensmittel', label: 'Essen', icon: Icons.apple },
-    { route: 'wochenplaner', label: 'Plan', icon: Icons.calendar },
-    { route: 'rezepte', label: 'Rezepte', icon: Icons.book },
+    { route: 'wochenplaner', label: 'Rezepte', icon: Icons.book },
     { route: 'wasser', label: 'Wasser', icon: Icons.drop },
     { route: 'bewegung', label: 'Bewegung', icon: Icons.figure },
     { route: 'wissen', label: 'Wissen', icon: Icons.lightbulb }

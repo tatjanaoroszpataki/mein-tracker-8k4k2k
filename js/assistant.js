@@ -85,8 +85,17 @@
     closePanel();
     location.hash = '#/' + entry.route;
     Router.show(entry.route);
-    if (entry.route === 'wissen' && entry.anchor && window.Views.wissen && window.Views.wissen.openAndScroll) {
+    if (!entry.anchor) return;
+    if (entry.route === 'wissen' && window.Views.wissen && window.Views.wissen.openAndScroll) {
+      // Wissen-Kapitel: klappt bei Bedarf auf und scrollt hin.
       window.Views.wissen.openAndScroll(entry.anchor);
+    } else {
+      // Sonstige Anker (z. B. der eingebettete Rezepte-Bereich): kurz
+      // warten, damit die Ziel-Seite fertig gerendert ist, dann scrollen.
+      setTimeout(function () {
+        var el = document.getElementById(entry.anchor);
+        if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }, 30);
     }
   }
 

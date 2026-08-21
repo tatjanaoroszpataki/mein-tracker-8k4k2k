@@ -63,7 +63,8 @@
         text: (window.MEAL_LABELS && MEAL_LABELS[r.meal] ? MEAL_LABELS[r.meal] + ' · ' : '') + (r.time || '') +
           (r.kcal ? ' · ca. ' + r.kcal + ' kcal' : '') + (r.why ? '. ' + r.why : '') +
           (r.ingredients && r.ingredients.length ? '. Zutaten: ' + r.ingredients.join(', ') : ''),
-        route: 'rezepte'
+        route: 'wochenplaner',
+        anchor: 'recipes-embed'
       });
     });
 

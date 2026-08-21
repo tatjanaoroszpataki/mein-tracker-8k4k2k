@@ -207,7 +207,17 @@
           renderEntryList(entries) +
         '</div>' +
         renderGoalCard(entries, goal)
-        : renderWaistTab(root, entries)) ;
+        : renderWaistTab(root, entries)) +
+
+      '<hr class="hr">' +
+      '<div id="calories-embed"></div>';
+
+    // Kalorienbedarf-Rechner direkt unter dem Gewicht angehängt (kein
+    // eigener Menüpunkt mehr) — Views.kalorien rendert komplett
+    // eigenständig in den übergebenen Container hinein.
+    if (window.Views.kalorien) {
+      Views.kalorien.render(document.getElementById('calories-embed'));
+    }
 
     if (state.tab === 'gewicht' && entries.length) {
       WeightChart.draw(document.getElementById('weight-canvas'), entries, goal);

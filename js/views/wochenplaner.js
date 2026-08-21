@@ -409,7 +409,17 @@
 
       '<div class="card" style="margin-top: var(--space-6);">' + shoppingListHtml() + '</div>' +
 
+      '<hr class="hr">' +
+      '<div id="recipes-embed"></div>' +
+
       (state.picker ? pickerHtml() : '');
+
+    // Rezeptideen direkt unter Wochenplan + Einkaufsliste angehängt (kein
+    // eigener Menüpunkt mehr) — Views.rezepte rendert komplett
+    // eigenständig in den übergebenen Container hinein.
+    if (window.Views.rezepte) {
+      Views.rezepte.render(document.getElementById('recipes-embed'));
+    }
 
     // Wochennavigation
     root.querySelector('#prev-week').addEventListener('click', function () {
