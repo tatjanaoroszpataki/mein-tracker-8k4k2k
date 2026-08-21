@@ -1,20 +1,27 @@
 /* =========================================================================
-   SERVICE WORKER — cached die App beim ersten Aufruf, damit sie danach
-   auch komplett ohne Internetverbindung startet. Funktioniert nur, wenn
-   die App über http(s) ausgeliefert wird (Service Worker sind bei
-   file:// nicht verfügbar) — das Registrieren dort schlägt einfach
-   lautlos fehl, siehe js/app.js.
+   SERVICE WORKER — sorgt dafür, dass die App auch offline startet.
+   Funktioniert nur, wenn die App über http(s) ausgeliefert wird (Service
+   Worker sind bei file:// nicht verfügbar) — das Registrieren schlägt
+   dort einfach lautlos fehl, siehe js/app.js.
+
+   Strategie: "Network first, Cache als Fallback" — bei jedem Aufruf wird
+   zuerst versucht, die Datei frisch aus dem Netz zu laden (und der Cache
+   dabei aktualisiert); nur wenn das fehlschlägt (offline), wird die
+   zuletzt gespeicherte Version aus dem Cache verwendet. Das stellt sicher,
+   dass Updates beim nächsten Öffnen mit Internetverbindung sofort
+   ankommen, während Offline-Nutzung trotzdem zuverlässig funktioniert.
+
+   CACHE_NAME bei größeren Änderungen an der Dateiliste hochzählen, damit
+   der activate-Handler alte, nicht mehr gebrauchte Caches aufräumt.
 
    Precache-Liste passt zur modularen Variante (index.html + css/js/…).
    Wird die Ein-Datei-Version (Schrittweise.html) gehostet, existieren
-   die meisten dieser Pfade dort nicht — das ist kein Problem, jede
-   Datei wird einzeln (nicht per addAll) versucht, fehlende Dateien
-   werden einfach übersprungen. Die Laufzeit-Caching-Strategie im
-   fetch-Handler cached zusätzlich alles, was tatsächlich abgerufen
-   wird — inklusive Schrittweise.html selbst.
+   die meisten dieser Pfade dort nicht — kein Problem, jede Datei wird
+   einzeln (nicht per addAll) versucht, fehlende Dateien werden einfach
+   übersprungen.
    ========================================================================= */
 
-var CACHE_NAME = 'schrittweise-cache-v1';
+var CACHE_NAME = 'schrittweise-cache-v2';
 
 var PRECACHE_URLS = [
   './',
@@ -31,6 +38,7 @@ var PRECACHE_URLS = [
   './js/notifications.js',
   './js/chart.js',
   './js/custom-recipes.js',
+  './js/custom-foods.js',
   './js/search.js',
   './js/assistant.js',
   './js/router.js',
@@ -84,18 +92,18 @@ self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      if (cached) return cached;
-
-      return fetch(event.request).then(function (response) {
-        if (response && response.status === 200 && response.type === 'basic') {
-          var copy = response.clone();
-          caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
-        }
-        return response;
-      }).catch(function () {
-        // Offline und nicht im Cache — bei Seitenaufrufen wenigstens die
-        // Startseite anbieten, statt komplett leer zu bleiben.
+    fetch(event.request).then(function (response) {
+      // Frische Antwort bekommen — im Cache ablegen, damit sie auch
+      // offline verfügbar ist, und direkt ausliefern.
+      if (response && response.status === 200 && response.type === 'basic') {
+        var copy = response.clone();
+        caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
+      }
+      return response;
+    }).catch(function () {
+      // Netzwerk nicht erreichbar (offline) — auf den Cache zurückfallen.
+      return caches.match(event.request).then(function (cached) {
+        if (cached) return cached;
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html').then(function (fallback) {
             return fallback || caches.match('./Schrittweise.html');
