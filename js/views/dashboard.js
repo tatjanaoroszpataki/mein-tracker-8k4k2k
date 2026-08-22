@@ -196,6 +196,7 @@
      explizit als eigener Posten dazu.
   */
   var foodPicker = { open: false, tab: 'recipe', query: '' };
+  var drinkPicker = { open: false, tab: 'preset' };
 
   function getFoodLogToday() {
     var log = Storage.read(Storage.KEYS.foodLog, {});
@@ -221,6 +222,36 @@
 
   function foodEatenToday() {
     return getFoodLogToday().reduce(function (sum, e) { return sum + e.kcal; }, 0);
+  }
+
+  /* Getränke — eigenes Log, genau wie Essen, damit z. B. Kaffee, Softdrinks
+     usw. ebenfalls in die Tagesbilanz einfließen (Wasser bleibt separat,
+     siehe waterToday/addWaterMl weiter oben — das ist reine Trinkmenge,
+     keine Kalorien). */
+  function getDrinkLogToday() {
+    var log = Storage.read(Storage.KEYS.drinkLog, {});
+    return log[Utils.todayISO()] || [];
+  }
+
+  function addDrinkEntry(name, kcal) {
+    var log = Storage.read(Storage.KEYS.drinkLog, {});
+    var today = Utils.todayISO();
+    var list = log[today] || [];
+    list.push({ id: Storage.uid(), name: name, kcal: kcal });
+    log[today] = list;
+    Storage.write(Storage.KEYS.drinkLog, log);
+    Storage.markActiveToday();
+  }
+
+  function removeDrinkEntry(id) {
+    var log = Storage.read(Storage.KEYS.drinkLog, {});
+    var today = Utils.todayISO();
+    log[today] = (log[today] || []).filter(function (e) { return e.id !== id; });
+    Storage.write(Storage.KEYS.drinkLog, log);
+  }
+
+  function drinkDrunkToday() {
+    return getDrinkLogToday().reduce(function (sum, e) { return sum + e.kcal; }, 0);
   }
 
   function foodPickerResultsHtml() {
@@ -280,54 +311,125 @@
       '</div>';
   }
 
+  function bindDrinkPresetResults(root) {
+    root.querySelectorAll('[data-log-drink]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-log-drink'), 10);
+        var d = DRINKS[idx];
+        if (d) {
+          addDrinkEntry(d.name, d.kcal);
+          drinkPicker.open = false;
+          Utils.toast('Eingetragen');
+          App.afterAction();
+          render(root);
+        }
+      });
+    });
+  }
+
+  function drinkPickerHtml() {
+    var tabs = [
+      { id: 'preset', label: 'Häufige Getränke' },
+      { id: 'custom', label: 'Frei eingeben' }
+    ];
+
+    var body;
+    if (drinkPicker.tab === 'preset') {
+      body = '<div class="stack" style="gap:0;">' +
+        DRINKS.map(function (d, i) {
+          return '<button class="plan-picker__recipe-item" data-log-drink="' + i + '">' +
+            '<strong>' + Utils.escapeHtml(d.name) + '</strong><span>ca. ' + d.kcal + ' kcal</span>' +
+          '</button>';
+        }).join('') +
+      '</div>';
+    } else {
+      body = '<div class="field"><label for="drink-picker-name">Was hast du getrunken?</label>' +
+        '<input class="input" id="drink-picker-name" type="text" placeholder="z. B. Cocktail"></div>' +
+        '<div class="field"><label for="drink-picker-kcal">Kalorien (ca.)</label>' +
+        '<input class="input" id="drink-picker-kcal" type="number" min="0" max="1500" placeholder="z. B. 150"></div>' +
+        '<button class="btn btn--primary btn--block" id="drink-picker-save">Eintragen</button>';
+    }
+
+    return '<div class="plan-picker-backdrop" id="drink-picker-backdrop"></div>' +
+      '<div class="plan-picker">' +
+        '<div class="plan-picker__header"><strong>Getränke eintragen</strong>' +
+          '<button class="btn btn--icon btn--ghost" id="drink-picker-close" aria-label="Schließen">' + Icons.close(18) + '</button>' +
+        '</div>' +
+        '<div class="chip-row plan-picker__tabs">' +
+          tabs.map(function (t) { return '<button class="chip' + (drinkPicker.tab === t.id ? ' is-active' : '') + '" data-drink-tab="' + t.id + '">' + t.label + '</button>'; }).join('') +
+        '</div>' +
+        '<div class="plan-picker__body">' + body + '</div>' +
+      '</div>';
+  }
+
   function dailyBalanceHtml() {
     var profile = CalorieCalc.getProfile();
     var result = CalorieCalc.computeFromProfile(profile);
-    var todayList = getFoodLogToday();
-    var eaten = foodEatenToday();
+    var todayFoodList = getFoodLogToday();
+    var todayDrinkList = getDrinkLogToday();
+    var eaten = foodEatenToday() + drinkDrunkToday();
 
-    var foodListHtml = todayList.length
+    var combinedList = todayFoodList.map(function (e) {
+      return { id: e.id, name: e.name, kcal: e.kcal, attr: 'data-remove-food' };
+    }).concat(todayDrinkList.map(function (e) {
+      return { id: e.id, name: e.name, kcal: e.kcal, attr: 'data-remove-drink' };
+    }));
+
+    var foodListHtml = combinedList.length
       ? '<ul class="stack" style="gap:0; margin-top: var(--space-3);">' +
-          todayList.map(function (e) {
+          combinedList.map(function (e) {
             return '<li class="shop-item"><span style="flex:1">' + Utils.escapeHtml(e.name) + '</span>' +
               '<strong style="margin-right:var(--space-2);">' + e.kcal + ' kcal</strong>' +
-              '<button class="shop-item__remove" data-remove-food="' + e.id + '" aria-label="' + Utils.escapeHtml(e.name) + ' entfernen">' + Icons.trash(15) + '</button>' +
+              '<button class="shop-item__remove" ' + e.attr + '="' + e.id + '" aria-label="' + Utils.escapeHtml(e.name) + ' entfernen">' + Icons.trash(15) + '</button>' +
             '</li>';
           }).join('') +
         '</ul>'
       : '';
 
-    var addFoodBtn = '<button class="btn btn--secondary btn--sm" id="open-food-picker" style="margin-top: var(--space-3);">' + Icons.plus(14) + ' Essen eintragen</button>';
+    var addFoodBtn = '<div class="chip-row" style="margin-top: var(--space-3); margin-bottom:0;">' +
+      '<button class="btn btn--secondary btn--sm" id="open-food-picker">' + Icons.plus(14) + ' Essen eintragen</button>' +
+      '<button class="btn btn--secondary btn--sm" id="open-drink-picker">' + Icons.plus(14) + ' Getränke eintragen</button>' +
+    '</div>';
 
     if (!result) {
       return '<div class="card" style="margin-top: var(--space-4);">' +
         '<h3 class="mt-0">Tagesbilanz</h3>' +
         '<p class="text-sm text-soft">Trag deinen Grundumsatz ein, um deine Tagesbilanz zu sehen — <a href="#/gewicht">jetzt berechnen</a>.</p>' +
         '<div class="hr"></div>' +
-        '<div class="flex-between"><span class="stat__label">Heute gegessen</span><strong>' + eaten + ' kcal</strong></div>' +
+        '<div class="flex-between"><span class="stat__label">Heute gegessen & getrunken</span><strong>' + eaten + ' kcal</strong></div>' +
         foodListHtml + addFoodBtn +
-      '</div>' + (foodPicker.open ? foodPickerHtml() : '');
+      '</div>' + (foodPicker.open ? foodPickerHtml() : '') + (drinkPicker.open ? drinkPickerHtml() : '');
     }
 
+    // Reiner Grundumsatz (BMR) entspricht Bewegungslosigkeit (z. B. den
+    // ganzen Tag im Bett) — normales Alltagsleben (Rumlaufen, Stehen,
+    // Haushalt) verbrennt spürbar mehr als das, auch ganz ohne "Sport"
+    // (NEAT, Non-Exercise Activity Thermogenesis). Deshalb als Basis
+    // Grundumsatz × 1,2 (derselbe "sitzend/Alltag ohne Sport"-Faktor wie
+    // im Kalorienrechner) statt des reinen BMR — Übungen/Schritte kommen
+    // wie gehabt on top für gezielte Bewegung über den Alltag hinaus.
+    var EVERYDAY_ACTIVITY_FACTOR = 1.2;
+    var everydayBase = Math.round(result.bmr * EVERYDAY_ACTIVITY_FACTOR);
     var burned = window.MovementCalc ? MovementCalc.todaysBurnedKcal() : 0;
-    var available = result.bmr + burned;
+    var available = everydayBase + burned;
     var balance = available - eaten;
 
     return '<div class="card" style="margin-top: var(--space-4);">' +
       '<h3 class="mt-0">Tagesbilanz</h3>' +
       '<div class="stack" style="gap: var(--space-2);">' +
-        '<div class="flex-between text-sm"><span class="text-soft">Grundumsatz (BMR)</span><span>' + result.bmr.toLocaleString('de-DE') + ' kcal</span></div>' +
-        '<div class="flex-between text-sm"><span class="text-soft">+ Bewegung heute</span><span>+' + burned.toLocaleString('de-DE') + ' kcal <a href="#/bewegung" class="text-sm">(Details)</a></span></div>' +
+        '<div class="flex-between text-sm"><span class="text-soft">Grundumsatz × 1,2 (Alltag)</span><span>' + everydayBase.toLocaleString('de-DE') + ' kcal</span></div>' +
+        '<div class="flex-between text-sm"><span class="text-soft">+ Übungen/Sport heute</span><span>+' + burned.toLocaleString('de-DE') + ' kcal <a href="#/bewegung" class="text-sm">(Details)</a></span></div>' +
         '<div class="flex-between" style="border-top: 1px solid var(--color-border); padding-top: 6px;"><strong>= Heute verfügbar</strong><strong>' + available.toLocaleString('de-DE') + ' kcal</strong></div>' +
-        '<div class="flex-between text-sm"><span class="text-soft">− Gegessen heute</span><span>−' + eaten.toLocaleString('de-DE') + ' kcal</span></div>' +
+        '<div class="flex-between text-sm"><span class="text-soft">− Gegessen & getrunken heute</span><span>−' + eaten.toLocaleString('de-DE') + ' kcal</span></div>' +
       '</div>' +
+      '<p class="text-sm text-soft" style="margin-top: var(--space-2); margin-bottom:0;">Alltagsbewegung (Rumlaufen, Stehen, Haushalt) ist im ×1,2-Faktor schon mit drin — Übungen, Sport und Schritte kommen zusätzlich dazu.</p>' +
       '<div style="margin-top: var(--space-3); padding: var(--space-4); background: var(--color-primary-tint); border-radius: var(--radius-md);">' +
         '<div class="stat__label" style="margin-bottom:4px;">Wo du heute rauskommst</div>' +
         '<span class="stat__value" style="font-size:1.3rem;">' + (balance >= 0 ? 'Defizit von ' + balance.toLocaleString('de-DE') : 'Überschuss von ' + Math.abs(balance).toLocaleString('de-DE')) + ' kcal</span>' +
         '<span class="stat__meta" style="display:block; margin-top:2px;">Zielbereich: ca. ' + (result.tdee - result.deficitHigh) + '–' + (result.tdee - result.deficitLow) + ' kcal Defizit (bezogen auf deinen Tagesbedarf)</span>' +
       '</div>' +
       foodListHtml + addFoodBtn +
-    '</div>' + (foodPicker.open ? foodPickerHtml() : '');
+    '</div>' + (foodPicker.open ? foodPickerHtml() : '') + (drinkPicker.open ? drinkPickerHtml() : '');
   }
 
   /* ---- PWA-Hinweis ----------------------------------------------------------- */
@@ -479,9 +581,22 @@
       render(root);
     });
 
+    var openDrinkBtn = root.querySelector('#open-drink-picker');
+    if (openDrinkBtn) openDrinkBtn.addEventListener('click', function () {
+      drinkPicker.open = true;
+      render(root);
+    });
+
     root.querySelectorAll('[data-remove-food]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         removeFoodEntry(btn.getAttribute('data-remove-food'));
+        render(root);
+      });
+    });
+
+    root.querySelectorAll('[data-remove-drink]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        removeDrinkEntry(btn.getAttribute('data-remove-drink'));
         render(root);
       });
     });
@@ -517,6 +632,35 @@
           if (isNaN(kcal) || kcal <= 0) { Utils.toast('Bitte die Kalorien eingeben'); return; }
           addFoodEntry(name, kcal);
           foodPicker.open = false;
+          Utils.toast('Eingetragen');
+          App.afterAction();
+          render(root);
+        });
+      }
+    }
+
+    if (drinkPicker.open) {
+      root.querySelector('#drink-picker-close').addEventListener('click', function () { drinkPicker.open = false; render(root); });
+      root.querySelector('#drink-picker-backdrop').addEventListener('click', function () { drinkPicker.open = false; render(root); });
+
+      root.querySelectorAll('[data-drink-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          drinkPicker.tab = btn.getAttribute('data-drink-tab');
+          render(root);
+        });
+      });
+
+      if (drinkPicker.tab === 'preset') {
+        bindDrinkPresetResults(root);
+      } else {
+        var saveDrinkBtn = root.querySelector('#drink-picker-save');
+        if (saveDrinkBtn) saveDrinkBtn.addEventListener('click', function () {
+          var name = document.getElementById('drink-picker-name').value.trim();
+          var kcal = parseInt(document.getElementById('drink-picker-kcal').value, 10);
+          if (!name) { Utils.toast('Bitte etwas eintragen'); return; }
+          if (isNaN(kcal) || kcal < 0) { Utils.toast('Bitte die Kalorien eingeben'); return; }
+          addDrinkEntry(name, kcal);
+          drinkPicker.open = false;
           Utils.toast('Eingetragen');
           App.afterAction();
           render(root);

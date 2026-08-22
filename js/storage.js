@@ -25,6 +25,7 @@
     customExercises: PREFIX + 'customExercises', // [{ id, name, kcal }] – eigene Übungen/Sportarten
     stepsLog: PREFIX + 'stepsLog',               // { 'YYYY-MM-DD': steps }
     foodLog: PREFIX + 'foodLog',                  // { 'YYYY-MM-DD': [{ id, name, kcal }] }
+    drinkLog: PREFIX + 'drinkLog',                // { 'YYYY-MM-DD': [{ id, name, kcal }] }
     activityDates: PREFIX + 'activityDates',   // ['YYYY-MM-DD', ...] – für Streak
     notifPrefs: PREFIX + 'notifPrefs',         // {enabled, times:['09:00', ...]}
     calorieProfile: PREFIX + 'calorieProfile', // {gender, age, heightCm, weightKg, pal}

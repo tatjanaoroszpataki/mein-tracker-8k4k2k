@@ -23,7 +23,7 @@
    übersprungen.
    ========================================================================= */
 
-var CACHE_NAME = 'schrittweise-cache-v4';
+var CACHE_NAME = 'schrittweise-cache-v5';
 
 var PRECACHE_URLS = [
   './',
@@ -49,6 +49,7 @@ var PRECACHE_URLS = [
   './js/data/foods.js',
   './js/data/recipes.js',
   './js/data/exercises.js',
+  './js/data/drinks.js',
   './js/data/knowledge.js',
   './js/views/dashboard.js',
   './js/views/weight.js',
