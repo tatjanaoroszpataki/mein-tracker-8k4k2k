@@ -22,6 +22,9 @@
     customRecipes: PREFIX + 'customRecipes',   // [{ id, title, meal, ingredients, ... }] – selbst angelegte Rezepte
     customFoods: PREFIX + 'customFoods',       // [{ id, name, category, status, note }] – selbst angelegte Lebensmittel
     sleepLog: PREFIX + 'sleepLog',               // { 'YYYY-MM-DD': hours }
+    customExercises: PREFIX + 'customExercises', // [{ id, name, kcal }] – eigene Übungen/Sportarten
+    stepsLog: PREFIX + 'stepsLog',               // { 'YYYY-MM-DD': steps }
+    foodLog: PREFIX + 'foodLog',                  // { 'YYYY-MM-DD': [{ id, name, kcal }] }
     activityDates: PREFIX + 'activityDates',   // ['YYYY-MM-DD', ...] – für Streak
     notifPrefs: PREFIX + 'notifPrefs',         // {enabled, times:['09:00', ...]}
     calorieProfile: PREFIX + 'calorieProfile', // {gender, age, heightCm, weightKg, pal}

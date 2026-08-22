@@ -21,7 +21,7 @@
    übersprungen.
    ========================================================================= */
 
-var CACHE_NAME = 'schrittweise-cache-v2';
+var CACHE_NAME = 'schrittweise-cache-v3';
 
 var PRECACHE_URLS = [
   './',
@@ -39,6 +39,7 @@ var PRECACHE_URLS = [
   './js/chart.js',
   './js/custom-recipes.js',
   './js/custom-foods.js',
+  './js/custom-exercises.js',
   './js/search.js',
   './js/assistant.js',
   './js/router.js',

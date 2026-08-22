@@ -138,6 +138,32 @@
     return Math.round(bmr * pal);
   }
 
+  /** Zuletzt getracktes Gewicht (kg) für Berechnungen, die das
+   *  Körpergewicht brauchen (z. B. Kalorienverbrauch von Übungen) — fällt
+   *  auf das im Kalorienrechner hinterlegte Gewicht zurück, sonst auf
+   *  einen groben Schätzwert. */
+  function currentWeightKg() {
+    var entries = Storage.read(Storage.KEYS.weightEntries, []);
+    if (entries.length) {
+      var sorted = entries.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      return sorted[sorted.length - 1].kg;
+    }
+    var profile = Storage.read(Storage.KEYS.calorieProfile, null);
+    if (profile && profile.weightKg) return profile.weightKg;
+    return 75;
+  }
+
+  /** Kalorienverbrauch nach MET-Formel: kcal = MET × Gewicht(kg) × Stunden.
+   *  MET-Werte aus dem Compendium of Physical Activities — Richtwert. */
+  function estimateKcalBurn(met, minutes, weightKg) {
+    return Math.round(met * weightKg * (minutes / 60));
+  }
+
+  /** Grober Richtwert für Schritte → kcal (skaliert mit Körpergewicht). */
+  function estimateStepsKcal(steps, weightKg) {
+    return Math.round(steps * weightKg * 0.0005);
+  }
+
   window.Utils = {
     pad: pad,
     toISO: toISO,
@@ -157,6 +183,9 @@
     formatDeltaKg: formatDeltaKg,
     parseDecimal: parseDecimal,
     calcBMR: calcBMR,
-    calcTDEE: calcTDEE
+    calcTDEE: calcTDEE,
+    currentWeightKg: currentWeightKg,
+    estimateKcalBurn: estimateKcalBurn,
+    estimateStepsKcal: estimateStepsKcal
   };
 })();

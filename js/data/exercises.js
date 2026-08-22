@@ -1,6 +1,15 @@
 /* =========================================================================
    DATEN — Bewegung: Alltags-Mini-Übungen + 30-Minuten-Workout
    pose bezieht sich auf StickFigure.poses (js/icons.js)
+
+   met  = Metabolic Equivalent of Task (Compendium of Physical Activities,
+          Ainsworth et al., aktualisierte Ausgabe 2024) — ein Richtwert für
+          die Intensität einer Aktivität.
+   minutes = grob geschätzte Dauer für die angegebene Dosis (Wiederholungen/
+          Sekunden), inkl. kurzer Pausen bei Satz-Übungen.
+   Der tatsächliche Kalorienverbrauch wird daraus zur Laufzeit mit dem
+   aktuellen Körpergewicht berechnet (siehe Utils.estimateKcalBurn) — daher
+   hier keine festen kcal-Zahlen, sondern MET + Dauer als Grundlage.
    ========================================================================= */
 
 (function () {
@@ -16,6 +25,7 @@
       name: 'Wadenheben',
       dose: '60 Sekunden',
       pose: 'calfRaise',
+      met: 2.8, minutes: 1,
       instructions: 'Gerade hinstellen, Fersen langsam vom Boden abheben und senken, bei Bedarf am Waschbecken abstützen.'
     },
     {
@@ -24,6 +34,7 @@
       name: 'Kniebeugen an der Küchenzeile',
       dose: '10–15 Wiederholungen',
       pose: 'squat',
+      met: 3.8, minutes: 1.5,
       instructions: 'Füße hüftbreit, Rücken gerade, in die Hocke gehen wie auf einen Stuhl setzen, wieder hochdrücken.'
     },
     {
@@ -32,6 +43,7 @@
       name: 'Liegestütz an der Küchenzeile',
       dose: '10 Wiederholungen',
       pose: 'pushUp',
+      met: 5.0, minutes: 1,
       instructions: 'Hände schulterbreit auf die Küchenzeile stützen, Körper gerade halten, Arme beugen und strecken.'
     },
     {
@@ -40,6 +52,7 @@
       name: 'Wandsitz',
       dose: '30 Sekunden',
       pose: 'wallSit',
+      met: 3.5, minutes: 0.5,
       instructions: 'Rücken an die Wand, in die Hocke bis die Oberschenkel parallel zum Boden sind, Position halten.'
     },
     {
@@ -48,6 +61,7 @@
       name: 'Ausfallschritte',
       dose: '10 pro Bein',
       pose: 'lunge',
+      met: 3.8, minutes: 1.5,
       instructions: 'Großer Schritt nach vorne, beide Knie auf 90 Grad beugen, zurückdrücken, Seite wechseln.'
     },
     {
@@ -56,6 +70,7 @@
       name: 'Bauch anspannen',
       dose: '60 Sekunden',
       pose: 'bellyBrace',
+      met: 2.5, minutes: 1,
       instructions: 'Bauchmuskeln bewusst anspannen und halten, dabei normal weiteratmen.'
     },
     {
@@ -64,6 +79,7 @@
       name: 'Zehenstand & Fersenheben',
       dose: '20 Wiederholungen',
       pose: 'calfRaise',
+      met: 2.8, minutes: 1,
       instructions: 'Abwechselnd auf die Zehenspitzen und auf die Fersen stellen.'
     },
     {
@@ -72,6 +88,7 @@
       name: 'Sit-ups',
       dose: '10–15 Wiederholungen',
       pose: 'situp',
+      met: 5.0, minutes: 1,
       instructions: 'Auf den Rücken legen, Knie angewinkelt, Oberkörper Richtung Knie aufrollen und wieder ablegen.'
     }
   ];
@@ -84,55 +101,55 @@
       id: 'aufwaermen',
       title: 'Aufwärmen / Cardio',
       exercises: [
-        { id: 'w-hampelmann', name: 'Hampelmänner', dose: '40 Sekunden', pose: 'jumpingJack', instructions: 'Gleichzeitig Arme über den Kopf und Beine seitlich öffnen und wieder schließen.' },
-        { id: 'w-kniehebelauf', name: 'Kniehebelauf', dose: '40 Sekunden', pose: 'highKnee', instructions: 'Auf der Stelle laufen und die Knie dabei bewusst hoch zur Hüfte ziehen.' },
-        { id: 'w-armkreisen', name: 'Armkreisen', dose: '30 Sekunden', pose: 'armCircle', instructions: 'Arme gestreckt in großen, langsamen Kreisen nach vorne und hinten kreisen.' },
-        { id: 'w-mountain-climbers', name: 'Mountain Climbers', dose: '40 Sekunden', pose: 'mountainClimber', instructions: 'Im Liegestütz die Knie abwechselnd schnell Richtung Brust ziehen, Körper dabei stabil und gerade halten.' },
-        { id: 'w-seilspringen', name: 'Seilspringen ohne Seil', dose: '40 Sekunden', pose: 'jumpRope', instructions: 'Wie Seilspringen, aber ohne Seil — auf der Stelle hüpfen und dabei die Handgelenke kreisen, als würde man ein Seil schwingen.' }
+        { id: 'w-hampelmann', name: 'Hampelmänner', dose: '40 Sekunden', pose: 'jumpingJack', met: 8.0, minutes: 0.67, instructions: 'Gleichzeitig Arme über den Kopf und Beine seitlich öffnen und wieder schließen.' },
+        { id: 'w-kniehebelauf', name: 'Kniehebelauf', dose: '40 Sekunden', pose: 'highKnee', met: 8.0, minutes: 0.67, instructions: 'Auf der Stelle laufen und die Knie dabei bewusst hoch zur Hüfte ziehen.' },
+        { id: 'w-armkreisen', name: 'Armkreisen', dose: '30 Sekunden', pose: 'armCircle', met: 2.5, minutes: 0.5, instructions: 'Arme gestreckt in großen, langsamen Kreisen nach vorne und hinten kreisen.' },
+        { id: 'w-mountain-climbers', name: 'Mountain Climbers', dose: '40 Sekunden', pose: 'mountainClimber', met: 8.0, minutes: 0.67, instructions: 'Im Liegestütz die Knie abwechselnd schnell Richtung Brust ziehen, Körper dabei stabil und gerade halten.' },
+        { id: 'w-seilspringen', name: 'Seilspringen ohne Seil', dose: '40 Sekunden', pose: 'jumpRope', met: 8.8, minutes: 0.67, instructions: 'Wie Seilspringen, aber ohne Seil — auf der Stelle hüpfen und dabei die Handgelenke kreisen, als würde man ein Seil schwingen.' }
       ]
     },
     {
       id: 'oberkoerper',
       title: 'Oberkörper',
       exercises: [
-        { id: 'w-liegestuetze', name: 'Liegestütze', dose: '3 × 10', pose: 'pushUp', instructions: 'Hände schulterbreit, Körper gerade, Arme beugen und strecken. Bei Bedarf auf den Knien.' },
-        { id: 'w-dips', name: 'Trizeps-Dips am Stuhl', dose: '3 × 10', pose: 'dip', instructions: 'Hände auf der Stuhlkante, Beine gestreckt nach vorne, Arme beugen und den Körper absenken und heben.' },
-        { id: 'w-diamond-pushups', name: 'Diamond Push-ups (enger Liegestütz)', dose: '3 × 8', pose: 'pushUp', instructions: 'Hände enger als schulterbreit zusammen, Daumen und Zeigefinger bilden eine Raute, Liegestütz wie gewohnt ausführen — stärkerer Fokus auf die Trizeps. Für Einsteiger an der Wand oder Küchenzeile statt am Boden.' },
-        { id: 'w-schulterdruecken', name: 'Schulterdrücken mit Wasserflaschen', dose: '3 × 12', pose: 'shoulderPress', instructions: 'Zwei gefüllte Wasserflaschen als Gewicht, im Stehen von Schulterhöhe nach oben drücken und kontrolliert absenken.' },
-        { id: 'w-seitheben', name: 'Seitliches Heben mit Wasserflaschen', dose: '3 × 12', pose: 'lateralRaise', instructions: 'Wasserflaschen seitlich bis auf Schulterhöhe anheben, langsam absenken.' }
+        { id: 'w-liegestuetze', name: 'Liegestütze', dose: '3 × 10', pose: 'pushUp', met: 8.0, minutes: 3, instructions: 'Hände schulterbreit, Körper gerade, Arme beugen und strecken. Bei Bedarf auf den Knien.' },
+        { id: 'w-dips', name: 'Trizeps-Dips am Stuhl', dose: '3 × 10', pose: 'dip', met: 6.0, minutes: 3, instructions: 'Hände auf der Stuhlkante, Beine gestreckt nach vorne, Arme beugen und den Körper absenken und heben.' },
+        { id: 'w-diamond-pushups', name: 'Diamond Push-ups (enger Liegestütz)', dose: '3 × 8', pose: 'pushUp', met: 8.0, minutes: 3, instructions: 'Hände enger als schulterbreit zusammen, Daumen und Zeigefinger bilden eine Raute, Liegestütz wie gewohnt ausführen — stärkerer Fokus auf die Trizeps. Für Einsteiger an der Wand oder Küchenzeile statt am Boden.' },
+        { id: 'w-schulterdruecken', name: 'Schulterdrücken mit Wasserflaschen', dose: '3 × 12', pose: 'shoulderPress', met: 4.0, minutes: 3, instructions: 'Zwei gefüllte Wasserflaschen als Gewicht, im Stehen von Schulterhöhe nach oben drücken und kontrolliert absenken.' },
+        { id: 'w-seitheben', name: 'Seitliches Heben mit Wasserflaschen', dose: '3 × 12', pose: 'lateralRaise', met: 3.5, minutes: 3, instructions: 'Wasserflaschen seitlich bis auf Schulterhöhe anheben, langsam absenken.' }
       ]
     },
     {
       id: 'ruecken',
       title: 'Rücken',
       exercises: [
-        { id: 'w-superman', name: 'Superman', dose: '3 × 12', pose: 'superman', instructions: 'Bäuchlings liegen, Arme nach vorne gestreckt, gleichzeitig Arme, Brust und Beine leicht vom Boden abheben und kurz halten.' },
-        { id: 'w-schwimmer', name: 'Rückenstrecker im Liegen (Schwimmer)', dose: '3 × 10 pro Seite', pose: 'superman', instructions: 'Bäuchlings liegen, abwechselnd gegenüberliegenden Arm und gegenüberliegendes Bein leicht anheben, wie beim Schwimmen.' },
-        { id: 'w-snow-angels', name: 'Reverse Snow Angels', dose: '3 × 12', pose: 'snowAngel', instructions: 'Bäuchlings liegen, Arme seitlich am Boden, langsam über den Kopf führen und zurück wie beim Schneeengel-Machen, dabei den oberen Rücken aktiv halten.' },
-        { id: 'w-rudern-flaschen', name: 'Vorgebeugtes Rudern mit Wasserflaschen', dose: '3 × 12', pose: 'bentRow', instructions: 'Leicht in die Knie gehen, Oberkörper nach vorne beugen, Wasserflaschen zur Hüfte ziehen, Schulterblätter dabei zusammenziehen.' },
-        { id: 'w-katze-kuh', name: 'Katze-Kuh (Rückenmobilisation)', dose: '10 Wiederholungen', pose: 'catCow', instructions: 'Auf allen Vieren abwechselnd den Rücken rund machen (Katze) und ins Hohlkreuz gehen (Kuh), langsam und kontrolliert.' }
+        { id: 'w-superman', name: 'Superman', dose: '3 × 12', pose: 'superman', met: 3.5, minutes: 3, instructions: 'Bäuchlings liegen, Arme nach vorne gestreckt, gleichzeitig Arme, Brust und Beine leicht vom Boden abheben und kurz halten.' },
+        { id: 'w-schwimmer', name: 'Rückenstrecker im Liegen (Schwimmer)', dose: '3 × 10 pro Seite', pose: 'superman', met: 3.5, minutes: 3, instructions: 'Bäuchlings liegen, abwechselnd gegenüberliegenden Arm und gegenüberliegendes Bein leicht anheben, wie beim Schwimmen.' },
+        { id: 'w-snow-angels', name: 'Reverse Snow Angels', dose: '3 × 12', pose: 'snowAngel', met: 3.0, minutes: 3, instructions: 'Bäuchlings liegen, Arme seitlich am Boden, langsam über den Kopf führen und zurück wie beim Schneeengel-Machen, dabei den oberen Rücken aktiv halten.' },
+        { id: 'w-rudern-flaschen', name: 'Vorgebeugtes Rudern mit Wasserflaschen', dose: '3 × 12', pose: 'bentRow', met: 4.0, minutes: 3, instructions: 'Leicht in die Knie gehen, Oberkörper nach vorne beugen, Wasserflaschen zur Hüfte ziehen, Schulterblätter dabei zusammenziehen.' },
+        { id: 'w-katze-kuh', name: 'Katze-Kuh (Rückenmobilisation)', dose: '10 Wiederholungen', pose: 'catCow', met: 2.5, minutes: 2, instructions: 'Auf allen Vieren abwechselnd den Rücken rund machen (Katze) und ins Hohlkreuz gehen (Kuh), langsam und kontrolliert.' }
       ]
     },
     {
       id: 'bauch',
       title: 'Bauch / Core',
       exercises: [
-        { id: 'w-plank', name: 'Unterarmstütz (Plank)', dose: '3 × 30 Sekunden', pose: 'plank', instructions: 'Auf den Unterarmen abstützen, Körper von Kopf bis Ferse in einer geraden Linie halten.' },
-        { id: 'w-plank-schulterberuehrung', name: 'Plank mit Schulterberührung', dose: '3 × 20 Berührungen', pose: 'plank', instructions: 'Im Liegestütz-Stand abwechselnd mit einer Hand die gegenüberliegende Schulter berühren, Hüfte dabei ruhig und stabil halten.' },
-        { id: 'w-crunches', name: 'Crunches', dose: '3 × 15', pose: 'situp', instructions: 'Rückenlage, Knie angewinkelt, Oberkörper leicht Richtung Knie einrollen, unterer Rücken bleibt am Boden.' },
-        { id: 'w-beinheben', name: 'Beinheben im Liegen', dose: '3 × 12', pose: 'legRaise', instructions: 'Rückenlage, Beine gestreckt, langsam anheben und absenken, ohne den unteren Rücken durchzudrücken.' },
-        { id: 'w-russian-twists', name: 'Russian Twists', dose: '3 × 16 (8 pro Seite)', pose: 'russianTwist', instructions: 'Im Sitzen leicht zurücklehnen, Oberkörper stabil halten, mit beiden Händen (optional mit Wasserflasche) von einer Seite zur anderen drehen.' }
+        { id: 'w-plank', name: 'Unterarmstütz (Plank)', dose: '3 × 30 Sekunden', pose: 'plank', met: 3.8, minutes: 3, instructions: 'Auf den Unterarmen abstützen, Körper von Kopf bis Ferse in einer geraden Linie halten.' },
+        { id: 'w-plank-schulterberuehrung', name: 'Plank mit Schulterberührung', dose: '3 × 20 Berührungen', pose: 'plank', met: 4.5, minutes: 3, instructions: 'Im Liegestütz-Stand abwechselnd mit einer Hand die gegenüberliegende Schulter berühren, Hüfte dabei ruhig und stabil halten.' },
+        { id: 'w-crunches', name: 'Crunches', dose: '3 × 15', pose: 'situp', met: 5.0, minutes: 3, instructions: 'Rückenlage, Knie angewinkelt, Oberkörper leicht Richtung Knie einrollen, unterer Rücken bleibt am Boden.' },
+        { id: 'w-beinheben', name: 'Beinheben im Liegen', dose: '3 × 12', pose: 'legRaise', met: 4.5, minutes: 3, instructions: 'Rückenlage, Beine gestreckt, langsam anheben und absenken, ohne den unteren Rücken durchzudrücken.' },
+        { id: 'w-russian-twists', name: 'Russian Twists', dose: '3 × 16 (8 pro Seite)', pose: 'russianTwist', met: 4.5, minutes: 3, instructions: 'Im Sitzen leicht zurücklehnen, Oberkörper stabil halten, mit beiden Händen (optional mit Wasserflasche) von einer Seite zur anderen drehen.' }
       ]
     },
     {
       id: 'beine',
       title: 'Beine & Po',
       exercises: [
-        { id: 'w-kniebeugen', name: 'Kniebeugen', dose: '3 × 15', pose: 'squat', instructions: 'Füße hüftbreit, Rücken gerade, in die Hocke gehen und wieder hochdrücken.' },
-        { id: 'w-ausfallschritte', name: 'Ausfallschritte', dose: '3 × 10 pro Bein', pose: 'lunge', instructions: 'Großer Schritt nach vorne, beide Knie auf 90 Grad beugen, zurückdrücken, Seite wechseln.' },
-        { id: 'w-wadenheben', name: 'Wadenheben', dose: '3 × 20', pose: 'calfRaise', instructions: 'Gerade hinstellen, Fersen heben und senken, kontrolliert bewegen.' },
-        { id: 'w-glute-bridge', name: 'Glute Bridge', dose: '3 × 15', pose: 'gluteBridge', instructions: 'Rückenlage, Füße aufgestellt, Becken nach oben drücken, bis Schultern, Hüfte und Knie eine Linie bilden, oben kurz halten, absenken.' },
-        { id: 'w-squat-to-lunge', name: 'Squat-to-Lunge', dose: '3 × 10 pro Bein', pose: 'lunge', instructions: 'Aus der Kniebeuge einen Schritt nach hinten in den Ausfallschritt setzen, zurück in die Kniebeuge, Seite wechseln.' }
+        { id: 'w-kniebeugen', name: 'Kniebeugen', dose: '3 × 15', pose: 'squat', met: 5.0, minutes: 4, instructions: 'Füße hüftbreit, Rücken gerade, in die Hocke gehen und wieder hochdrücken.' },
+        { id: 'w-ausfallschritte', name: 'Ausfallschritte', dose: '3 × 10 pro Bein', pose: 'lunge', met: 5.0, minutes: 4, instructions: 'Großer Schritt nach vorne, beide Knie auf 90 Grad beugen, zurückdrücken, Seite wechseln.' },
+        { id: 'w-wadenheben', name: 'Wadenheben', dose: '3 × 20', pose: 'calfRaise', met: 3.0, minutes: 3, instructions: 'Gerade hinstellen, Fersen heben und senken, kontrolliert bewegen.' },
+        { id: 'w-glute-bridge', name: 'Glute Bridge', dose: '3 × 15', pose: 'gluteBridge', met: 3.5, minutes: 3, instructions: 'Rückenlage, Füße aufgestellt, Becken nach oben drücken, bis Schultern, Hüfte und Knie eine Linie bilden, oben kurz halten, absenken.' },
+        { id: 'w-squat-to-lunge', name: 'Squat-to-Lunge', dose: '3 × 10 pro Bein', pose: 'lunge', met: 5.5, minutes: 4, instructions: 'Aus der Kniebeuge einen Schritt nach hinten in den Ausfallschritt setzen, zurück in die Kniebeuge, Seite wechseln.' }
       ]
     }
   ];

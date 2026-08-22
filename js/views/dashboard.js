@@ -187,6 +187,149 @@
     '</div>';
   }
 
+  /* ---- Tagesbilanz -----------------------------------------------------------
+     Grundumsatz + heutige Bewegung (Übungen/Sportarten/Schritte, siehe
+     js/views/movement.js) minus heute Gegessenes (eigenes Tages-Log,
+     unabhängig vom Wochenplaner) = Kalorienbilanz für heute. Nutzt den
+     Grundumsatz (BMR) statt des PAL-bereinigten Tagesbedarfs als Basis,
+     damit Bewegung nicht doppelt gezählt wird — sie kommt hier ja bereits
+     explizit als eigener Posten dazu.
+  */
+  var foodPicker = { open: false, tab: 'recipe', query: '' };
+
+  function getFoodLogToday() {
+    var log = Storage.read(Storage.KEYS.foodLog, {});
+    return log[Utils.todayISO()] || [];
+  }
+
+  function addFoodEntry(name, kcal) {
+    var log = Storage.read(Storage.KEYS.foodLog, {});
+    var today = Utils.todayISO();
+    var list = log[today] || [];
+    list.push({ id: Storage.uid(), name: name, kcal: kcal });
+    log[today] = list;
+    Storage.write(Storage.KEYS.foodLog, log);
+    Storage.markActiveToday();
+  }
+
+  function removeFoodEntry(id) {
+    var log = Storage.read(Storage.KEYS.foodLog, {});
+    var today = Utils.todayISO();
+    log[today] = (log[today] || []).filter(function (e) { return e.id !== id; });
+    Storage.write(Storage.KEYS.foodLog, log);
+  }
+
+  function foodEatenToday() {
+    return getFoodLogToday().reduce(function (sum, e) { return sum + e.kcal; }, 0);
+  }
+
+  function foodPickerResultsHtml() {
+    var q = (foodPicker.query || '').toLowerCase();
+    var recipes = CustomRecipes.all().filter(function (r) { return r.kcal; });
+    if (q) recipes = recipes.filter(function (r) { return r.title.toLowerCase().indexOf(q) !== -1; });
+    return recipes.length ? recipes.map(function (r) {
+      return '<button class="plan-picker__recipe-item" data-log-recipe="' + r.id + '">' +
+        '<strong>' + Utils.escapeHtml(r.title) + '</strong><span>ca. ' + r.kcal + ' kcal</span>' +
+      '</button>';
+    }).join('') : '<p class="text-sm text-soft">Keine passenden Rezepte mit hinterlegten kcal gefunden.</p>';
+  }
+
+  function bindFoodPickerResults(root) {
+    root.querySelectorAll('[data-log-recipe]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = CustomRecipes.findById(btn.getAttribute('data-log-recipe'));
+        if (r) {
+          addFoodEntry(r.title, r.kcal);
+          foodPicker.open = false;
+          Utils.toast('Eingetragen');
+          App.afterAction();
+          render(root);
+        }
+      });
+    });
+  }
+
+  function foodPickerHtml() {
+    var tabs = [
+      { id: 'recipe', label: 'Aus Rezepten' },
+      { id: 'custom', label: 'Frei eingeben' }
+    ];
+
+    var body;
+    if (foodPicker.tab === 'recipe') {
+      body = '<div class="search-input" style="margin-bottom: var(--space-3);">' + Icons.search(16) +
+        '<input type="search" id="food-picker-search" placeholder="Rezept suchen …" value="' + Utils.escapeHtml(foodPicker.query) + '"></div>' +
+        '<div id="food-picker-results">' + foodPickerResultsHtml() + '</div>';
+    } else {
+      body = '<div class="field"><label for="food-picker-name">Was hast du gegessen?</label>' +
+        '<input class="input" id="food-picker-name" type="text" placeholder="z. B. Butterbrot mit Käse"></div>' +
+        '<div class="field"><label for="food-picker-kcal">Kalorien (ca.)</label>' +
+        '<input class="input" id="food-picker-kcal" type="number" min="0" max="3000" placeholder="z. B. 350"></div>' +
+        '<button class="btn btn--primary btn--block" id="food-picker-save">Eintragen</button>';
+    }
+
+    return '<div class="plan-picker-backdrop" id="food-picker-backdrop"></div>' +
+      '<div class="plan-picker">' +
+        '<div class="plan-picker__header"><strong>Essen eintragen</strong>' +
+          '<button class="btn btn--icon btn--ghost" id="food-picker-close" aria-label="Schließen">' + Icons.close(18) + '</button>' +
+        '</div>' +
+        '<div class="chip-row plan-picker__tabs">' +
+          tabs.map(function (t) { return '<button class="chip' + (foodPicker.tab === t.id ? ' is-active' : '') + '" data-food-tab="' + t.id + '">' + t.label + '</button>'; }).join('') +
+        '</div>' +
+        '<div class="plan-picker__body">' + body + '</div>' +
+      '</div>';
+  }
+
+  function dailyBalanceHtml() {
+    var profile = CalorieCalc.getProfile();
+    var result = CalorieCalc.computeFromProfile(profile);
+    var todayList = getFoodLogToday();
+    var eaten = foodEatenToday();
+
+    var foodListHtml = todayList.length
+      ? '<ul class="stack" style="gap:0; margin-top: var(--space-3);">' +
+          todayList.map(function (e) {
+            return '<li class="shop-item"><span style="flex:1">' + Utils.escapeHtml(e.name) + '</span>' +
+              '<strong style="margin-right:var(--space-2);">' + e.kcal + ' kcal</strong>' +
+              '<button class="shop-item__remove" data-remove-food="' + e.id + '" aria-label="' + Utils.escapeHtml(e.name) + ' entfernen">' + Icons.trash(15) + '</button>' +
+            '</li>';
+          }).join('') +
+        '</ul>'
+      : '';
+
+    var addFoodBtn = '<button class="btn btn--secondary btn--sm" id="open-food-picker" style="margin-top: var(--space-3);">' + Icons.plus(14) + ' Essen eintragen</button>';
+
+    if (!result) {
+      return '<div class="card" style="margin-top: var(--space-4);">' +
+        '<h3 class="mt-0">Tagesbilanz</h3>' +
+        '<p class="text-sm text-soft">Trag deinen Grundumsatz ein, um deine Tagesbilanz zu sehen — <a href="#/gewicht">jetzt berechnen</a>.</p>' +
+        '<div class="hr"></div>' +
+        '<div class="flex-between"><span class="stat__label">Heute gegessen</span><strong>' + eaten + ' kcal</strong></div>' +
+        foodListHtml + addFoodBtn +
+      '</div>' + (foodPicker.open ? foodPickerHtml() : '');
+    }
+
+    var burned = window.MovementCalc ? MovementCalc.todaysBurnedKcal() : 0;
+    var available = result.bmr + burned;
+    var balance = available - eaten;
+
+    return '<div class="card" style="margin-top: var(--space-4);">' +
+      '<h3 class="mt-0">Tagesbilanz</h3>' +
+      '<div class="stack" style="gap: var(--space-2);">' +
+        '<div class="flex-between text-sm"><span class="text-soft">Grundumsatz (BMR)</span><span>' + result.bmr.toLocaleString('de-DE') + ' kcal</span></div>' +
+        '<div class="flex-between text-sm"><span class="text-soft">+ Bewegung heute</span><span>+' + burned.toLocaleString('de-DE') + ' kcal <a href="#/bewegung" class="text-sm">(Details)</a></span></div>' +
+        '<div class="flex-between" style="border-top: 1px solid var(--color-border); padding-top: 6px;"><strong>= Heute verfügbar</strong><strong>' + available.toLocaleString('de-DE') + ' kcal</strong></div>' +
+        '<div class="flex-between text-sm"><span class="text-soft">− Gegessen heute</span><span>−' + eaten.toLocaleString('de-DE') + ' kcal</span></div>' +
+      '</div>' +
+      '<div style="margin-top: var(--space-3); padding: var(--space-4); background: var(--color-primary-tint); border-radius: var(--radius-md);">' +
+        '<div class="stat__label" style="margin-bottom:4px;">Wo du heute rauskommst</div>' +
+        '<span class="stat__value" style="font-size:1.3rem;">' + (balance >= 0 ? 'Defizit von ' + balance.toLocaleString('de-DE') : 'Überschuss von ' + Math.abs(balance).toLocaleString('de-DE')) + ' kcal</span>' +
+        '<span class="stat__meta" style="display:block; margin-top:2px;">Zielbereich: ca. ' + (result.tdee - result.deficitHigh) + '–' + (result.tdee - result.deficitLow) + ' kcal Defizit (bezogen auf deinen Tagesbedarf)</span>' +
+      '</div>' +
+      foodListHtml + addFoodBtn +
+    '</div>' + (foodPicker.open ? foodPickerHtml() : '');
+  }
+
   /* ---- PWA-Hinweis ----------------------------------------------------------- */
   function installHintHtml() {
     return '<div class="card card--tight" style="margin-top: var(--space-4); background: var(--color-primary-tint); border-color: var(--color-primary-light);">' +
@@ -248,6 +391,8 @@
           '<div style="color: var(--color-accent)">' + Icons.flame(38) + '</div>' +
         '</div>' +
       '</div>' +
+
+      dailyBalanceHtml() +
 
       weeklyReviewHtml() +
 
@@ -327,6 +472,57 @@
 
     root.querySelector('#water-minus').addEventListener('click', function () { addWaterMl(-GLASS_ML); App.afterAction(); render(root); });
     root.querySelector('#water-plus').addEventListener('click', function () { addWaterMl(GLASS_ML); App.afterAction(); render(root); });
+
+    var openFoodBtn = root.querySelector('#open-food-picker');
+    if (openFoodBtn) openFoodBtn.addEventListener('click', function () {
+      foodPicker.open = true;
+      render(root);
+    });
+
+    root.querySelectorAll('[data-remove-food]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        removeFoodEntry(btn.getAttribute('data-remove-food'));
+        render(root);
+      });
+    });
+
+    if (foodPicker.open) {
+      root.querySelector('#food-picker-close').addEventListener('click', function () { foodPicker.open = false; render(root); });
+      root.querySelector('#food-picker-backdrop').addEventListener('click', function () { foodPicker.open = false; render(root); });
+
+      root.querySelectorAll('[data-food-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          foodPicker.tab = btn.getAttribute('data-food-tab');
+          render(root);
+        });
+      });
+
+      if (foodPicker.tab === 'recipe') {
+        var foodSearch = root.querySelector('#food-picker-search');
+        if (foodSearch) foodSearch.addEventListener('input', Utils.debounce(function () {
+          foodPicker.query = foodSearch.value;
+          var resultsEl = document.getElementById('food-picker-results');
+          if (resultsEl) {
+            resultsEl.innerHTML = foodPickerResultsHtml();
+            bindFoodPickerResults(root);
+          }
+        }, 150));
+        bindFoodPickerResults(root);
+      } else {
+        var saveFoodBtn = root.querySelector('#food-picker-save');
+        if (saveFoodBtn) saveFoodBtn.addEventListener('click', function () {
+          var name = document.getElementById('food-picker-name').value.trim();
+          var kcal = parseInt(document.getElementById('food-picker-kcal').value, 10);
+          if (!name) { Utils.toast('Bitte etwas eintragen'); return; }
+          if (isNaN(kcal) || kcal <= 0) { Utils.toast('Bitte die Kalorien eingeben'); return; }
+          addFoodEntry(name, kcal);
+          foodPicker.open = false;
+          Utils.toast('Eingetragen');
+          App.afterAction();
+          render(root);
+        });
+      }
+    }
   }
 
   function greeting() {
