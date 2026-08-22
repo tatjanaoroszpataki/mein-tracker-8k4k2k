@@ -5,11 +5,13 @@
    dort einfach lautlos fehl, siehe js/app.js.
 
    Strategie: "Network first, Cache als Fallback" — bei jedem Aufruf wird
-   zuerst versucht, die Datei frisch aus dem Netz zu laden (und der Cache
-   dabei aktualisiert); nur wenn das fehlschlägt (offline), wird die
-   zuletzt gespeicherte Version aus dem Cache verwendet. Das stellt sicher,
-   dass Updates beim nächsten Öffnen mit Internetverbindung sofort
-   ankommen, während Offline-Nutzung trotzdem zuverlässig funktioniert.
+   zuerst versucht, die Datei frisch aus dem Netz zu laden (mit
+   {cache:'no-store'}, damit nicht der normale HTTP-Cache des Browsers
+   selbst eine alte Antwort ausliefert, ohne überhaupt beim Server
+   nachzufragen — sonst würde "network first" die Aktualität nicht
+   garantieren) und der Service-Worker-Cache dabei aktualisiert; nur wenn
+   das fehlschlägt (offline), wird die zuletzt gespeicherte Version aus
+   dem Cache verwendet.
 
    CACHE_NAME bei größeren Änderungen an der Dateiliste hochzählen, damit
    der activate-Handler alte, nicht mehr gebrauchte Caches aufräumt.
@@ -21,7 +23,7 @@
    übersprungen.
    ========================================================================= */
 
-var CACHE_NAME = 'schrittweise-cache-v3';
+var CACHE_NAME = 'schrittweise-cache-v4';
 
 var PRECACHE_URLS = [
   './',
@@ -93,7 +95,7 @@ self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request).then(function (response) {
+    fetch(event.request, { cache: 'no-store' }).then(function (response) {
       // Frische Antwort bekommen — im Cache ablegen, damit sie auch
       // offline verfügbar ist, und direkt ausliefern.
       if (response && response.status === 200 && response.type === 'basic') {
