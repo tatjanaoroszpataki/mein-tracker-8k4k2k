@@ -194,7 +194,19 @@
         '</div>' +
       '</div>' +
 
-      '<h2 style="margin-top: var(--space-6);">Mini-Übungen im Alltag</h2>' +
+      '<h2 style="margin-top: var(--space-6);">Eigene Übungen & Sportarten</h2>' +
+      '<p class="text-soft mt-0">Für alles, was hier nicht vorgegeben ist — z. B. Joggen, Tennis, Radfahren. Einmal anlegen, danach jederzeit mit einem Klick für heute eintragen.</p>' +
+      CustomExercises.getAll().map(function (ex) { return customExerciseCard(ex, done.indexOf(ex.id) !== -1); }).join('') +
+      '<div class="card" style="margin-top: var(--space-3);">' +
+        '<h3 class="mt-0">Neue Übung/Sportart</h3>' +
+        '<form id="custom-ex-form" class="input-row">' +
+          '<div class="field" style="margin-bottom:0; flex:2;"><label for="custom-ex-name">Name</label><input class="input" id="custom-ex-name" type="text" placeholder="z. B. Joggen (30 Min)"></div>' +
+          '<div class="field" style="margin-bottom:0;"><label for="custom-ex-kcal">Verbrannt (ca. kcal)</label><input class="input" id="custom-ex-kcal" type="number" min="0" max="3000" placeholder="z. B. 300"></div>' +
+          '<button class="btn btn--primary" type="submit">' + Icons.plus(16) + ' Speichern & heute eintragen</button>' +
+        '</form>' +
+      '</div>' +
+
+      '<h2 style="margin-top: var(--space-7);">Mini-Übungen im Alltag</h2>' +
       '<p class="text-soft mt-0">An eine Routine gekoppelt, die du sowieso schon hast. Mit ' + Icons.plus(12) + ' zur heutigen Übersicht hinzufügen.</p>' +
       MINI_EXERCISES.map(function (ex) { return miniExerciseCard(ex, done.indexOf(ex.id) !== -1); }).join('') +
 
@@ -213,19 +225,7 @@
             return trainingExerciseCard(ex, done.indexOf(ex.id) !== -1, selection.indexOf(ex.id) !== -1);
           }).join('') +
         '</div>';
-      }).join('') +
-
-      '<h2 style="margin-top: var(--space-7);">Eigene Übungen & Sportarten</h2>' +
-      '<p class="text-soft mt-0">Für alles, was hier nicht vorgegeben ist — z. B. Joggen, Tennis, Radfahren. Einmal anlegen, danach jederzeit mit einem Klick für heute eintragen.</p>' +
-      CustomExercises.getAll().map(function (ex) { return customExerciseCard(ex, done.indexOf(ex.id) !== -1); }).join('') +
-      '<div class="card" style="margin-top: var(--space-3);">' +
-        '<h3 class="mt-0">Neue Übung/Sportart</h3>' +
-        '<form id="custom-ex-form" class="input-row">' +
-          '<div class="field" style="margin-bottom:0; flex:2;"><label for="custom-ex-name">Name</label><input class="input" id="custom-ex-name" type="text" placeholder="z. B. Joggen (30 Min)"></div>' +
-          '<div class="field" style="margin-bottom:0;"><label for="custom-ex-kcal">Verbrannt (ca. kcal)</label><input class="input" id="custom-ex-kcal" type="number" min="0" max="3000" placeholder="z. B. 300"></div>' +
-          '<button class="btn btn--primary" type="submit">' + Icons.plus(16) + ' Speichern & heute eintragen</button>' +
-        '</form>' +
-      '</div>';
+      }).join('');
 
     root.querySelectorAll('[data-add]').forEach(function (btn) {
       btn.addEventListener('click', function () {

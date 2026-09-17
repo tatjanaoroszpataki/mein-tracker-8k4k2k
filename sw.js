@@ -23,7 +23,7 @@
    übersprungen.
    ========================================================================= */
 
-var CACHE_NAME = 'schrittweise-cache-v5';
+var CACHE_NAME = 'schrittweise-cache-v7';
 
 var PRECACHE_URLS = [
   './',

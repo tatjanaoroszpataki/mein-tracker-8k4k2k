@@ -225,29 +225,35 @@
   }
 
   /* Getränke — eigenes Log, genau wie Essen, damit z. B. Kaffee, Softdrinks
-     usw. ebenfalls in die Tagesbilanz einfließen (Wasser bleibt separat,
-     siehe waterToday/addWaterMl weiter oben — das ist reine Trinkmenge,
-     keine Kalorien). */
+     usw. ebenfalls in die Tagesbilanz einfließen. Die Menge (ml) jedes
+     Getränks zählt außerdem automatisch zur Wasser-/Flüssigkeitsanzeige
+     dazu (waterToday/addWaterMl weiter oben) — Kaffee, Saft, Bier usw.
+     sind schließlich auch Flüssigkeit. Beim Löschen eines Eintrags wird
+     die Menge dort wieder abgezogen. */
   function getDrinkLogToday() {
     var log = Storage.read(Storage.KEYS.drinkLog, {});
     return log[Utils.todayISO()] || [];
   }
 
-  function addDrinkEntry(name, kcal) {
+  function addDrinkEntry(name, kcal, ml) {
     var log = Storage.read(Storage.KEYS.drinkLog, {});
     var today = Utils.todayISO();
     var list = log[today] || [];
-    list.push({ id: Storage.uid(), name: name, kcal: kcal });
+    list.push({ id: Storage.uid(), name: name, kcal: kcal, ml: ml || 0 });
     log[today] = list;
     Storage.write(Storage.KEYS.drinkLog, log);
+    if (ml) addWaterMl(ml);
     Storage.markActiveToday();
   }
 
   function removeDrinkEntry(id) {
     var log = Storage.read(Storage.KEYS.drinkLog, {});
     var today = Utils.todayISO();
-    log[today] = (log[today] || []).filter(function (e) { return e.id !== id; });
+    var list = log[today] || [];
+    var entry = list.filter(function (e) { return e.id === id; })[0];
+    log[today] = list.filter(function (e) { return e.id !== id; });
     Storage.write(Storage.KEYS.drinkLog, log);
+    if (entry && entry.ml) addWaterMl(-entry.ml);
   }
 
   function drinkDrunkToday() {
@@ -317,7 +323,7 @@
         var idx = parseInt(btn.getAttribute('data-log-drink'), 10);
         var d = DRINKS[idx];
         if (d) {
-          addDrinkEntry(d.name, d.kcal);
+          addDrinkEntry(d.name, d.kcal, d.ml);
           drinkPicker.open = false;
           Utils.toast('Eingetragen');
           App.afterAction();
@@ -338,7 +344,7 @@
       body = '<div class="stack" style="gap:0;">' +
         DRINKS.map(function (d, i) {
           return '<button class="plan-picker__recipe-item" data-log-drink="' + i + '">' +
-            '<strong>' + Utils.escapeHtml(d.name) + '</strong><span>ca. ' + d.kcal + ' kcal</span>' +
+            '<strong>' + Utils.escapeHtml(d.name) + '</strong><span>ca. ' + d.kcal + ' kcal · ' + d.ml + ' ml</span>' +
           '</button>';
         }).join('') +
       '</div>';
@@ -347,6 +353,8 @@
         '<input class="input" id="drink-picker-name" type="text" placeholder="z. B. Cocktail"></div>' +
         '<div class="field"><label for="drink-picker-kcal">Kalorien (ca.)</label>' +
         '<input class="input" id="drink-picker-kcal" type="number" min="0" max="1500" placeholder="z. B. 150"></div>' +
+        '<div class="field"><label for="drink-picker-ml">Menge (ca. ml)</label>' +
+        '<input class="input" id="drink-picker-ml" type="number" min="0" max="2000" placeholder="z. B. 300"></div>' +
         '<button class="btn btn--primary btn--block" id="drink-picker-save">Eintragen</button>';
     }
 
@@ -657,9 +665,11 @@
         if (saveDrinkBtn) saveDrinkBtn.addEventListener('click', function () {
           var name = document.getElementById('drink-picker-name').value.trim();
           var kcal = parseInt(document.getElementById('drink-picker-kcal').value, 10);
+          var ml = parseInt(document.getElementById('drink-picker-ml').value, 10);
           if (!name) { Utils.toast('Bitte etwas eintragen'); return; }
           if (isNaN(kcal) || kcal < 0) { Utils.toast('Bitte die Kalorien eingeben'); return; }
-          addDrinkEntry(name, kcal);
+          if (isNaN(ml) || ml < 0) ml = 0;
+          addDrinkEntry(name, kcal, ml);
           drinkPicker.open = false;
           Utils.toast('Eingetragen');
           App.afterAction();
