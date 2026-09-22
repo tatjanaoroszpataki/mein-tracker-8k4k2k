@@ -31,22 +31,16 @@
 
   function waterToday() {
     var goal = Storage.read(Storage.KEYS.waterGoalMl, 2000);
-    var log = Storage.read(Storage.KEYS.waterLog, {});
-    var ml = log[Utils.todayISO()] || 0;
+    var ml = DayLog.getWaterMl(Utils.todayISO());
     return { ml: ml, goal: goal, pct: goal ? ml / goal : 0 };
   }
 
   function addWaterMl(delta) {
-    var log = Storage.read(Storage.KEYS.waterLog, {});
-    var today = Utils.todayISO();
-    log[today] = Math.max(0, (log[today] || 0) + delta);
-    Storage.write(Storage.KEYS.waterLog, log);
-    Storage.markActiveToday();
+    DayLog.addWaterMl(Utils.todayISO(), delta);
   }
 
   function exerciseToday() {
-    var log = Storage.read(Storage.KEYS.exerciseLog, {});
-    var done = log[Utils.todayISO()] || [];
+    var done = DayLog.getExercisesDone(Utils.todayISO());
     return { done: done.length, total: MINI_EXERCISES.length };
   }
 
@@ -148,18 +142,13 @@
      Richtwert (7–9 Std.), keine Bewertung.
   */
   function getSleepToday() {
-    var log = Storage.read(Storage.KEYS.sleepLog, {});
-    var v = log[Utils.todayISO()];
-    return (v == null) ? null : v;
+    return DayLog.getSleep(Utils.todayISO());
   }
 
   function adjustSleep(delta) {
-    var log = Storage.read(Storage.KEYS.sleepLog, {});
     var today = Utils.todayISO();
-    var next = Utils.round1(Utils.clamp((log[today] || 0) + delta, 0, 14));
-    log[today] = next;
-    Storage.write(Storage.KEYS.sleepLog, log);
-    Storage.markActiveToday();
+    var next = Utils.round1(Utils.clamp((DayLog.getSleep(today) || 0) + delta, 0, 14));
+    DayLog.setSleep(today, next);
   }
 
   function sleepRangeText(hours) {
@@ -199,65 +188,41 @@
   var drinkPicker = { open: false, tab: 'preset' };
 
   function getFoodLogToday() {
-    var log = Storage.read(Storage.KEYS.foodLog, {});
-    return log[Utils.todayISO()] || [];
+    return DayLog.getFood(Utils.todayISO());
   }
 
   function addFoodEntry(name, kcal) {
-    var log = Storage.read(Storage.KEYS.foodLog, {});
-    var today = Utils.todayISO();
-    var list = log[today] || [];
-    list.push({ id: Storage.uid(), name: name, kcal: kcal });
-    log[today] = list;
-    Storage.write(Storage.KEYS.foodLog, log);
-    Storage.markActiveToday();
+    DayLog.addFood(Utils.todayISO(), name, kcal);
   }
 
   function removeFoodEntry(id) {
-    var log = Storage.read(Storage.KEYS.foodLog, {});
-    var today = Utils.todayISO();
-    log[today] = (log[today] || []).filter(function (e) { return e.id !== id; });
-    Storage.write(Storage.KEYS.foodLog, log);
+    DayLog.removeFood(Utils.todayISO(), id);
   }
 
   function foodEatenToday() {
-    return getFoodLogToday().reduce(function (sum, e) { return sum + e.kcal; }, 0);
+    return DayLog.foodKcal(Utils.todayISO());
   }
 
   /* Getränke — eigenes Log, genau wie Essen, damit z. B. Kaffee, Softdrinks
      usw. ebenfalls in die Tagesbilanz einfließen. Die Menge (ml) jedes
      Getränks zählt außerdem automatisch zur Wasser-/Flüssigkeitsanzeige
-     dazu (waterToday/addWaterMl weiter oben) — Kaffee, Saft, Bier usw.
-     sind schließlich auch Flüssigkeit. Beim Löschen eines Eintrags wird
-     die Menge dort wieder abgezogen. */
+     dazu (siehe js/day-log.js) — Kaffee, Saft, Bier usw. sind schließlich
+     auch Flüssigkeit. Beim Löschen eines Eintrags wird die Menge dort
+     wieder abgezogen. */
   function getDrinkLogToday() {
-    var log = Storage.read(Storage.KEYS.drinkLog, {});
-    return log[Utils.todayISO()] || [];
+    return DayLog.getDrinks(Utils.todayISO());
   }
 
   function addDrinkEntry(name, kcal, ml) {
-    var log = Storage.read(Storage.KEYS.drinkLog, {});
-    var today = Utils.todayISO();
-    var list = log[today] || [];
-    list.push({ id: Storage.uid(), name: name, kcal: kcal, ml: ml || 0 });
-    log[today] = list;
-    Storage.write(Storage.KEYS.drinkLog, log);
-    if (ml) addWaterMl(ml);
-    Storage.markActiveToday();
+    DayLog.addDrink(Utils.todayISO(), name, kcal, ml);
   }
 
   function removeDrinkEntry(id) {
-    var log = Storage.read(Storage.KEYS.drinkLog, {});
-    var today = Utils.todayISO();
-    var list = log[today] || [];
-    var entry = list.filter(function (e) { return e.id === id; })[0];
-    log[today] = list.filter(function (e) { return e.id !== id; });
-    Storage.write(Storage.KEYS.drinkLog, log);
-    if (entry && entry.ml) addWaterMl(-entry.ml);
+    DayLog.removeDrink(Utils.todayISO(), id);
   }
 
   function drinkDrunkToday() {
-    return getDrinkLogToday().reduce(function (sum, e) { return sum + e.kcal; }, 0);
+    return DayLog.drinkKcal(Utils.todayISO());
   }
 
   function foodPickerResultsHtml() {
@@ -554,6 +519,8 @@
         '<input type="file" id="import-json-input" accept="application/json,.json" class="visually-hidden">' +
       '</div>' +
 
+      '<div id="verlauf-embed"></div>' +
+
       installHintHtml();
 
     var exportJsonBtn = root.querySelector('#export-json');
@@ -676,6 +643,18 @@
           render(root);
         });
       }
+    }
+
+    // Verlauf (Wochen-/Monatsansicht + rückwirkendes Eintragen) ganz am
+    // Ende angehängt, gleiches Einbettungs-Muster wie Views.kalorien in
+    // js/views/weight.js — try/catch, damit ein Fehler dort nicht die
+    // wichtigeren Bindungen oben beeinträchtigt.
+    try {
+      if (window.Views.verlauf) {
+        Views.verlauf.render(document.getElementById('verlauf-embed'));
+      }
+    } catch (err) {
+      console.warn('Verlauf-Bereich konnte nicht gerendert werden', err);
     }
   }
 

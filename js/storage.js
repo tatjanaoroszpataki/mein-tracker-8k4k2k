@@ -58,17 +58,21 @@
   }
 
   /**
-   * Merkt den heutigen Tag als "aktiv" (für den Streak-Zähler).
-   * Wird von jeder View aufgerufen, die eine sinnvolle Aktion loggt
-   * (Gewicht, Wasser, Übung erledigt).
+   * Merkt einen Tag als "aktiv" (für den Streak-Zähler). Wird von jeder
+   * View aufgerufen, die eine sinnvolle Aktion loggt (Gewicht, Wasser,
+   * Übung erledigt) — auch rückwirkend über den Verlauf (js/day-log.js),
+   * deshalb mit Datum statt fest auf "heute".
    */
-  function markActiveToday() {
-    var today = Utils.todayISO();
+  function markActive(date) {
     var dates = read(KEYS.activityDates, []);
-    if (dates.indexOf(today) === -1) {
-      dates.push(today);
+    if (dates.indexOf(date) === -1) {
+      dates.push(date);
       write(KEYS.activityDates, dates);
     }
+  }
+
+  function markActiveToday() {
+    markActive(Utils.todayISO());
   }
 
   /** Berechnet die aktuelle Streak (Tage in Folge bis heute/gestern aktiv). */
@@ -106,6 +110,7 @@
     read: read,
     write: write,
     uid: uid,
+    markActive: markActive,
     markActiveToday: markActiveToday,
     getStreak: getStreak,
     exportAll: exportAll

@@ -12,19 +12,11 @@
   'use strict';
 
   function getDoneToday() {
-    var log = Storage.read(Storage.KEYS.exerciseLog, {});
-    return log[Utils.todayISO()] || [];
+    return DayLog.getExercisesDone(Utils.todayISO());
   }
 
   function toggleDone(id) {
-    var log = Storage.read(Storage.KEYS.exerciseLog, {});
-    var today = Utils.todayISO();
-    var list = log[today] || [];
-    var idx = list.indexOf(id);
-    if (idx === -1) { list.push(id); } else { list.splice(idx, 1); }
-    log[today] = list;
-    Storage.write(Storage.KEYS.exerciseLog, log);
-    if (idx === -1) Storage.markActiveToday();
+    DayLog.toggleExercise(Utils.todayISO(), id);
   }
 
   /** Die "Standardauswahl" ist selbst änderbar — startet mit der
@@ -77,25 +69,23 @@
 
   /* ---- Schritte -------------------------------------------------------- */
   function getStepsToday() {
-    var log = Storage.read(Storage.KEYS.stepsLog, {});
-    var v = log[Utils.todayISO()];
-    return (v == null) ? null : v;
+    return DayLog.getSteps(Utils.todayISO());
   }
 
   function setStepsToday(steps) {
-    var log = Storage.read(Storage.KEYS.stepsLog, {});
-    log[Utils.todayISO()] = Utils.clamp(Math.round(steps), 0, 100000);
-    Storage.write(Storage.KEYS.stepsLog, log);
-    Storage.markActiveToday();
+    DayLog.setSteps(Utils.todayISO(), steps);
   }
 
   /**
-   * Gesamte heute verbrannte Kalorien (eingebaute Übungen + eigene
-   * Übungen/Sportarten + Schritte) — öffentlich, damit das Dashboard die
-   * Tagesbilanz berechnen kann.
+   * Verbrannte Kalorien an einem beliebigen Tag (eingebaute Übungen +
+   * eigene Übungen/Sportarten + Schritte) — öffentlich als MovementCalc,
+   * damit Dashboard-Tagesbilanz und Verlauf (js/views/history.js) darauf
+   * zugreifen können. Rechnet immer mit dem aktuellen Körpergewicht (keine
+   * historischen Gewichtswerte pro Tag) — für den MET-Richtwert genau
+   * genug.
    */
-  function todaysBurnedKcal() {
-    var done = getDoneToday();
+  function burnedKcalForDate(date) {
+    var done = DayLog.getExercisesDone(date);
     var weight = Utils.currentWeightKg();
     var total = 0;
     done.forEach(function (id) {
@@ -104,9 +94,30 @@
       var custom = CustomExercises.findById(id);
       if (custom) { total += custom.kcal; }
     });
-    var steps = getStepsToday();
+    var steps = DayLog.getSteps(date);
     if (steps) total += Utils.estimateStepsKcal(steps, weight);
     return Math.round(total);
+  }
+
+  function todaysBurnedKcal() {
+    return burnedKcalForDate(Utils.todayISO());
+  }
+
+  /** Name einer eingebauten oder eigenen Übung anhand der ID — für die
+   *  Anzeige im Verlauf. */
+  function exerciseName(id) {
+    var builtIn = findBuiltInExerciseById(id);
+    if (builtIn) return builtIn.name;
+    var custom = CustomExercises.findById(id);
+    return custom ? custom.name : id;
+  }
+
+  /** Flache Liste aller wählbaren Übungen/Sportarten (eingebaut + eigene)
+   *  — für das Nachtragen-Dropdown im Verlauf. */
+  function allExerciseOptions() {
+    return MINI_EXERCISES.map(function (e) { return { id: e.id, name: e.name }; })
+      .concat(allWorkoutExercises().map(function (e) { return { id: e.id, name: e.name }; }))
+      .concat(CustomExercises.getAll().map(function (e) { return { id: e.id, name: e.name }; }));
   }
 
   /**
@@ -301,5 +312,10 @@
 
   window.Views = window.Views || {};
   window.Views.bewegung = { render: render };
-  window.MovementCalc = { todaysBurnedKcal: todaysBurnedKcal };
+  window.MovementCalc = {
+    todaysBurnedKcal: todaysBurnedKcal,
+    burnedKcalForDate: burnedKcalForDate,
+    exerciseName: exerciseName,
+    allExerciseOptions: allExerciseOptions
+  };
 })();
