@@ -504,6 +504,8 @@
         '<a class="btn btn--secondary btn--sm" href="#/gewicht">' + Icons.scale(16) + ' Gewicht eintragen</a>' +
       '</div>' +
 
+      '<div id="verlauf-embed"></div>' +
+
       backupReminderHtml() +
 
       '<div class="card" style="margin-top: var(--space-6);">' +
@@ -518,8 +520,6 @@
         '<p class="text-sm text-soft" style="margin-top: var(--space-3); margin-bottom:0;">Für einen Gerätewechsel: Backup auf dem alten Gerät exportieren, Datei ans neue Gerät übertragen (z. B. per Mail oder USB-Stick), dort über „Backup importieren“ wieder einspielen.</p>' +
         '<input type="file" id="import-json-input" accept="application/json,.json" class="visually-hidden">' +
       '</div>' +
-
-      '<div id="verlauf-embed"></div>' +
 
       installHintHtml();
 

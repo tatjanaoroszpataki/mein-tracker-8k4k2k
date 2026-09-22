@@ -23,12 +23,18 @@
   }
 
   /**
-   * Zeichnet den Chart in ein <canvas>.
+   * Zeichnet den Chart in ein <canvas>. Trotz der Namen ("kg", "targetKg")
+   * generisch genug für jede numerische Messreihe mit Datum — wird z. B.
+   * auch für den Kaloriendefizit-Verlauf wiederverwendet (dort mit
+   * yDecimals=0 und einer gestrichelten Nulllinie als "goal").
    * @param {HTMLCanvasElement} canvas
    * @param {Array<{date:string, kg:number}>} entries – aufsteigend sortiert
    * @param {{targetKg?:number}} goal
+   * @param {number} [yDecimals] Nachkommastellen der Y-Achsenbeschriftung (Standard 1, wie bisher für kg)
+   * @param {string} [emptyMessage] Text, wenn `entries` leer ist
    */
-  function draw(canvas, entries, goal) {
+  function draw(canvas, entries, goal, yDecimals, emptyMessage) {
+    var decimals = (yDecimals == null) ? 1 : yDecimals;
     var ctx = canvas.getContext('2d');
     var cssWidth = canvas.parentElement.clientWidth;
     var cssHeight = 220;
@@ -55,7 +61,7 @@
       ctx.fillStyle = colorInk;
       ctx.font = '13px ' + styles.getPropertyValue('--font-body');
       ctx.textAlign = 'center';
-      ctx.fillText('Noch keine Einträge — trag dein Gewicht ein, um den Verlauf zu sehen.', cssWidth / 2, cssHeight / 2);
+      ctx.fillText(emptyMessage || 'Noch keine Einträge — trag dein Gewicht ein, um den Verlauf zu sehen.', cssWidth / 2, cssHeight / 2);
       return;
     }
 
@@ -88,7 +94,7 @@
       ctx.lineTo(cssWidth - padding.right, y);
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillText(Utils.round1(v).toFixed(1), padding.left - 8, y);
+      ctx.fillText(v.toFixed(decimals), padding.left - 8, y);
     }
 
     // --- X-Achsenbeschriftung (erste, mittlere, letzte Messung) ------------

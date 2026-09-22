@@ -1,18 +1,165 @@
 /* =========================================================================
-   VIEW — Verlauf (eingebettet auf dem Dashboard, siehe js/views/dashboard.js)
-   Tagesansicht mit Vor/Zurück-Navigation und Datumsauswahl, in der sich
-   Essen, Getränke, Schlaf, Übungen und Schritte für JEDEN Tag ansehen und
-   auch rückwirkend nachtragen lassen — plus eine Wochen-/Monatsliste zum
-   schnellen Reinspringen in einen bestimmten Tag. Nutzt überall DayLog
-   (js/day-log.js), denselben datumsbasierten Zugriff wie Dashboard und
-   Bewegung für "heute".
+   VIEW — Verlauf / Monatsrückblick / Tag im Detail (eingebettet auf dem
+   Dashboard, siehe js/views/dashboard.js, direkt nach den Buttons "Übung
+   abhaken" / "Gewicht eintragen"). Drei Bausteine, immer in dieser
+   Reihenfolge:
+
+   1. "Verlauf"          — Monatsauswahl (beliebig weit zurück, nicht auf
+                            ein festes Zeitfenster begrenzt) + Liniendia-
+                            gramm des täglichen Kaloriendefizits.
+   2. "Monatsrückblick"  — automatische Textzusammenfassung des gewählten
+                            Monats (analog zum Wochenrückblick, nur pro
+                            Monat), nur mit tatsächlich erfassten Fakten.
+   3. "Tag im Detail"    — Tagesansicht mit Vor/Zurück/Datumsauswahl, in
+                            der sich Essen, Getränke, Schlaf, Übungen und
+                            Schritte für JEDEN Tag ansehen und auch
+                            rückwirkend nachtragen lassen.
+
+   Nutzt überall DayLog (js/day-log.js), denselben datumsbasierten Zugriff
+   wie Dashboard und Bewegung für "heute".
    ========================================================================= */
 
 (function () {
   'use strict';
 
-  var state = { date: Utils.todayISO(), rangeDays: 7 };
+  var MONTH_NAMES = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
+  var state = { date: Utils.todayISO(), month: Utils.todayISO().slice(0, 7) };
+
+  /* ---- Monats-Hilfsfunktionen -------------------------------------------- */
+  function daysInMonthArr(monthKey) {
+    var parts = monthKey.split('-').map(Number);
+    var lastDay = new Date(parts[0], parts[1], 0).getDate();
+    var arr = [];
+    for (var d = 1; d <= lastDay; d++) arr.push(monthKey + '-' + Utils.pad(d));
+    return arr;
+  }
+
+  function addMonthsToKey(monthKey, n) {
+    var parts = monthKey.split('-').map(Number);
+    var d = new Date(parts[0], parts[1] - 1 + n, 1);
+    return d.getFullYear() + '-' + Utils.pad(d.getMonth() + 1);
+  }
+
+  function formatMonthLabel(monthKey) {
+    var parts = monthKey.split('-').map(Number);
+    return MONTH_NAMES[parts[1] - 1] + ' ' + parts[0];
+  }
+
+  /* ---- Kaloriendefizit ----------------------------------------------------
+     Gleiche Rechnung wie die Tagesbilanz auf dem Dashboard (Grundumsatz ×
+     1,2 + Bewegung − Gegessenes/Getrunkenes), nur für ein beliebiges
+     Datum. Tage ganz ohne Kalorien-relevante Einträge werden ausgelassen
+     (kein erfundener "Defizit" nur weil an dem Tag nichts erfasst wurde).
+     ========================================================================= */
+  function dayHasCalorieData(date) {
+    return DayLog.getFood(date).length > 0 ||
+      DayLog.getDrinks(date).length > 0 ||
+      DayLog.getExercisesDone(date).length > 0 ||
+      (DayLog.getSteps(date) != null && DayLog.getSteps(date) > 0);
+  }
+
+  function dayDeficit(date, bmr) {
+    var everydayBase = Math.round(bmr * 1.2);
+    var burned = MovementCalc.burnedKcalForDate(date);
+    var eaten = DayLog.foodKcal(date) + DayLog.drinkKcal(date);
+    return everydayBase + burned - eaten;
+  }
+
+  /* ---- Karte 1: Verlauf (Monatsauswahl + Liniendiagramm) ------------------- */
+  function chartCardHtml() {
+    var today = Utils.todayISO();
+    return '<div class="card" style="margin-top: var(--space-4);">' +
+      '<h3 class="mt-0">Verlauf</h3>' +
+      '<p class="text-sm text-soft mt-0">Kaloriendefizit pro Tag — wähl einen Monat, beliebig weit zurück.</p>' +
+      '<div class="flex-between" style="gap: var(--space-2);">' +
+        '<button class="btn btn--icon btn--secondary" id="hist-prev-month" aria-label="Vorheriger Monat">' + Icons.arrowLeft(16) + '</button>' +
+        '<div style="text-align:center; flex:1; min-width:0;">' +
+          '<div style="font-weight:700;">' + formatMonthLabel(state.month) + '</div>' +
+          '<input type="month" class="input" id="hist-month-input" style="margin-top:4px; max-width:200px; display:inline-block;" value="' + state.month + '" max="' + today.slice(0, 7) + '">' +
+        '</div>' +
+        '<button class="btn btn--icon btn--secondary" id="hist-next-month" aria-label="Nächster Monat"' + (state.month >= today.slice(0, 7) ? ' disabled' : '') + '>' + Icons.arrowRight(16) + '</button>' +
+      '</div>' +
+      '<div class="chart-wrap" style="margin-top: var(--space-3);"><canvas id="deficit-canvas" height="220"></canvas></div>' +
+      '<p class="text-sm text-soft" style="margin-bottom:0;">Gestrichelte Linie = ausgeglichen. Nur Tage mit erfassten Mahlzeiten, Getränken, Übungen oder Schritten werden gezeigt.</p>' +
+    '</div>';
+  }
+
+  function drawDeficitChart() {
+    var canvas = document.getElementById('deficit-canvas');
+    if (!canvas) return;
+    var profile = CalorieCalc.getProfile();
+    var result = CalorieCalc.computeFromProfile(profile);
+    if (!result) {
+      WeightChart.draw(canvas, [], null, 0, 'Trag zuerst deinen Grundumsatz ein (Seite „Gewicht“), um den Kaloriendefizit-Verlauf zu sehen.');
+      return;
+    }
+    var today = Utils.todayISO();
+    var days = daysInMonthArr(state.month).filter(function (d) { return d <= today; });
+    var points = days.filter(dayHasCalorieData).map(function (d) {
+      return { date: d, kg: dayDeficit(d, result.bmr) };
+    });
+    WeightChart.draw(canvas, points, { targetKg: 0 }, 0, 'Für diesen Monat sind noch keine Mahlzeiten, Getränke, Übungen oder Schritte erfasst.');
+  }
+
+  /* ---- Karte 2: Monatsrückblick --------------------------------------------- */
+  function monthlyReviewFacts() {
+    var today = Utils.todayISO();
+    var days = daysInMonthArr(state.month).filter(function (d) { return d <= today; });
+    var facts = [];
+
+    var profile = CalorieCalc.getProfile();
+    var result = CalorieCalc.computeFromProfile(profile);
+    if (result) {
+      var deficitDays = days.filter(dayHasCalorieData);
+      if (deficitDays.length) {
+        var totalDeficit = deficitDays.reduce(function (s, d) { return s + dayDeficit(d, result.bmr); }, 0);
+        var avgDeficit = Math.round(totalDeficit / deficitDays.length);
+        facts.push('im Schnitt ' + (avgDeficit >= 0 ? 'Defizit von ' + avgDeficit : 'Überschuss von ' + Math.abs(avgDeficit)) + ' kcal/Tag (' + deficitDays.length + ' erfasste ' + (deficitDays.length === 1 ? 'Tag' : 'Tage') + ')');
+      }
+    }
+
+    var waterGoal = Storage.read(Storage.KEYS.waterGoalMl, 2000);
+    var waterDaysWithData = days.filter(function (d) { return DayLog.getWaterMl(d) > 0; });
+    if (waterDaysWithData.length) {
+      var reached = waterDaysWithData.filter(function (d) { return DayLog.getWaterMl(d) >= waterGoal; }).length;
+      facts.push('Wasserziel an ' + reached + ' von ' + waterDaysWithData.length + ' erfassten Tagen erreicht');
+    }
+
+    var totalEx = days.reduce(function (sum, d) { return sum + DayLog.getExercisesDone(d).length; }, 0);
+    if (totalEx > 0) facts.push(totalEx + (totalEx === 1 ? ' Übung absolviert' : ' Übungen absolviert'));
+
+    var sleepValues = days.map(function (d) { return DayLog.getSleep(d); }).filter(function (v) { return v != null && v > 0; });
+    if (sleepValues.length) {
+      var avgSleep = sleepValues.reduce(function (a, b) { return a + b; }, 0) / sleepValues.length;
+      facts.push('im Schnitt ' + Utils.round1(avgSleep).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Std. Schlaf');
+    }
+
+    if (days.length) {
+      var weightEntries = Storage.read(Storage.KEYS.weightEntries, [])
+        .filter(function (e) { return e.date >= days[0] && e.date <= days[days.length - 1]; })
+        .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      if (weightEntries.length >= 2) {
+        var diff = Utils.round1(weightEntries[weightEntries.length - 1].kg - weightEntries[0].kg);
+        facts.push(diff === 0 ? 'Gewicht stabil in diesem Monat' : 'Gewichtsveränderung: ' + Utils.formatDeltaKg(diff));
+      }
+    }
+
+    return facts;
+  }
+
+  function monthlyReviewHtml() {
+    var facts = monthlyReviewFacts();
+    var body = facts.length
+      ? '<p class="mt-0" style="margin-bottom:0;">' + formatMonthLabel(state.month) + ': ' + facts.join(', ') + '.</p>'
+      : '<p class="mt-0 text-soft" style="margin-bottom:0;">Für ' + formatMonthLabel(state.month) + ' liegen noch keine Daten vor.</p>';
+    return '<div class="card" style="margin-top: var(--space-4);">' +
+      '<h3 class="mt-0">Monatsrückblick</h3>' +
+      body +
+    '</div>';
+  }
+
+  /* ---- Karte 3: Tag im Detail (rückwirkendes Eintragen) --------------------- */
   function combinedEntries(date) {
     var food = DayLog.getFood(date).map(function (e) {
       return { id: e.id, name: e.name, kcal: e.kcal, remove: 'data-hist-remove-food' };
@@ -53,7 +200,7 @@
     }).join('');
   }
 
-  function dayDetailHtml() {
+  function dayDetailCardHtml() {
     var date = state.date;
     var today = Utils.todayISO();
     var entries = combinedEntries(date);
@@ -63,7 +210,10 @@
     var sleep = DayLog.getSleep(date);
     var steps = DayLog.getSteps(date);
 
-    return '<div class="flex-between" style="gap: var(--space-2);">' +
+    return '<div class="card" style="margin-top: var(--space-4);">' +
+      '<h3 class="mt-0">Tag im Detail</h3>' +
+      '<p class="text-sm text-soft mt-0">Sieh dir einen bestimmten Tag an oder trag rückwirkend etwas nach.</p>' +
+      '<div class="flex-between" style="gap: var(--space-2);">' +
         '<button class="btn btn--icon btn--secondary" id="hist-prev-day" aria-label="Vorheriger Tag">' + Icons.arrowLeft(16) + '</button>' +
         '<div style="text-align:center; flex:1; min-width:0;">' +
           '<div style="font-weight:700;">' + Utils.formatDateLong(date) + '</div>' +
@@ -127,64 +277,26 @@
           '<input class="input" id="hist-steps-input" type="number" min="0" max="100000" step="100" value="' + (steps != null ? steps : '') + '" placeholder="z. B. 8000">' +
           '<button class="btn btn--secondary btn--sm" id="hist-steps-save">Speichern</button>' +
         '</div>' +
-      '</div>';
-  }
-
-  function dayRowHtml(date) {
-    var eaten = DayLog.foodKcal(date) + DayLog.drinkKcal(date);
-    var burned = MovementCalc.burnedKcalForDate(date);
-    var water = DayLog.getWaterMl(date);
-    var sleep = DayLog.getSleep(date);
-    var hasAny = eaten > 0 || burned > 0 || water > 0 || sleep != null;
-
-    var parts = [];
-    if (eaten > 0) parts.push(eaten + ' kcal gegessen');
-    if (burned > 0) parts.push('ca. ' + burned + ' kcal verbrannt');
-    if (water > 0) parts.push((water / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' l');
-    if (sleep != null) parts.push(sleep.toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Std. Schlaf');
-
-    var meta = hasAny ? parts.join(' · ') : 'Keine Einträge';
-    var selected = date === state.date;
-    return '<button class="plan-picker__recipe-item" style="' + (selected ? 'background: var(--color-primary-tint); border-radius: var(--radius-sm);' : '') + '" data-hist-day="' + date + '">' +
-      '<strong>' + Utils.formatDateLong(date) + '</strong><span>' + meta + '</span>' +
-    '</button>';
-  }
-
-  function overviewHtml() {
-    var today = Utils.todayISO();
-    var days = [];
-    for (var i = state.rangeDays - 1; i >= 0; i--) days.push(Utils.addDays(today, -i));
-
-    return '<div class="chip-row" style="margin-top: var(--space-2);">' +
-        '<button class="chip' + (state.rangeDays === 7 ? ' is-active' : '') + '" data-hist-range="7">Letzte 7 Tage</button>' +
-        '<button class="chip' + (state.rangeDays === 30 ? ' is-active' : '') + '" data-hist-range="30">Letzte 30 Tage</button>' +
       '</div>' +
-      '<div style="margin-top: var(--space-2); max-height: 340px; overflow-y: auto;">' +
-        days.slice().reverse().map(dayRowHtml).join('') +
-      '</div>';
+    '</div>';
   }
 
+  /* ---- Zusammenbau ----------------------------------------------------------- */
   function render(root) {
     if (!root) return;
 
     root.innerHTML =
-      '<div class="card" style="margin-top: var(--space-4);">' +
-        '<h3 class="mt-0">Verlauf</h3>' +
-        '<p class="text-sm text-soft mt-0">Sieh dir vergangene Tage an oder trag rückwirkend etwas nach.</p>' +
-        dayDetailHtml() +
-      '</div>' +
-      '<div class="card" style="margin-top: var(--space-4);">' +
-        '<h3 class="mt-0">Wochen-/Monatsübersicht</h3>' +
-        overviewHtml() +
-      '</div>';
+      chartCardHtml() +
+      monthlyReviewHtml() +
+      dayDetailCardHtml();
 
+    drawDeficitChart();
     bind(root);
   }
 
   /** Nach jeder Aktion wird bewusst das GANZE Dashboard neu gerendert
-   *  (nicht nur der Verlauf-Bereich) — sonst zeigt die Tagesbilanz oben
-   *  veraltete Zahlen, wenn man über den Verlauf rückwirkend etwas für
-   *  HEUTE einträgt. */
+   *  (nicht nur dieser Bereich) — sonst zeigt die Tagesbilanz oben
+   *  veraltete Zahlen, wenn man hier rückwirkend etwas für HEUTE einträgt. */
   function refresh() {
     var dashRoot = document.getElementById('view-dashboard');
     if (dashRoot && window.Views && window.Views.dashboard) {
@@ -197,32 +309,31 @@
   function bind(root) {
     var d = state.date;
 
+    /* Verlauf-Karte: Monatsnavigation */
+    var prevMonthBtn = root.querySelector('#hist-prev-month');
+    if (prevMonthBtn) prevMonthBtn.addEventListener('click', function () { state.month = addMonthsToKey(state.month, -1); render(root); });
+
+    var nextMonthBtn = root.querySelector('#hist-next-month');
+    if (nextMonthBtn && !nextMonthBtn.disabled) nextMonthBtn.addEventListener('click', function () { state.month = addMonthsToKey(state.month, 1); render(root); });
+
+    var monthInput = root.querySelector('#hist-month-input');
+    if (monthInput) monthInput.addEventListener('change', function () {
+      if (monthInput.value) { state.month = monthInput.value; render(root); }
+    });
+
+    /* Tag-im-Detail-Karte: Tagesnavigation */
     var prevBtn = root.querySelector('#hist-prev-day');
-    if (prevBtn) prevBtn.addEventListener('click', function () { state.date = Utils.addDays(d, -1); refresh(); });
+    if (prevBtn) prevBtn.addEventListener('click', function () { state.date = Utils.addDays(d, -1); render(root); });
 
     var nextBtn = root.querySelector('#hist-next-day');
-    if (nextBtn && !nextBtn.disabled) nextBtn.addEventListener('click', function () { state.date = Utils.addDays(d, 1); refresh(); });
+    if (nextBtn && !nextBtn.disabled) nextBtn.addEventListener('click', function () { state.date = Utils.addDays(d, 1); render(root); });
 
     var todayBtn = root.querySelector('#hist-today');
-    if (todayBtn) todayBtn.addEventListener('click', function () { state.date = Utils.todayISO(); refresh(); });
+    if (todayBtn) todayBtn.addEventListener('click', function () { state.date = Utils.todayISO(); render(root); });
 
     var dateInput = root.querySelector('#hist-date-input');
     if (dateInput) dateInput.addEventListener('change', function () {
-      if (dateInput.value) { state.date = dateInput.value; refresh(); }
-    });
-
-    root.querySelectorAll('[data-hist-day]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        state.date = btn.getAttribute('data-hist-day');
-        refresh();
-      });
-    });
-
-    root.querySelectorAll('[data-hist-range]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        state.rangeDays = parseInt(btn.getAttribute('data-hist-range'), 10);
-        refresh();
-      });
+      if (dateInput.value) { state.date = dateInput.value; render(root); }
     });
 
     root.querySelectorAll('[data-hist-remove-food]').forEach(function (btn) {
